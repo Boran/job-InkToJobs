@@ -1,6 +1,6 @@
 VERSION 5.00
 Begin VB.Form MainFrm 
-   Caption         =   "MySQL Connection"
+   Caption         =   "Ink - Job System synchronisation"
    ClientHeight    =   9675
    ClientLeft      =   1035
    ClientTop       =   645
@@ -12,18 +12,18 @@ Begin VB.Form MainFrm
    WindowState     =   2  'Maximized
    Begin VB.Timer Timer2 
       Interval        =   5000
-      Left            =   4800
-      Top             =   1560
+      Left            =   480
+      Top             =   0
    End
    Begin VB.Timer Timer1 
       Enabled         =   0   'False
       Interval        =   1000
-      Left            =   4080
-      Top             =   1560
+      Left            =   0
+      Top             =   0
    End
    Begin VB.TextBox Text1 
       Height          =   285
-      Left            =   8280
+      Left            =   5880
       TabIndex        =   11
       Text            =   "Counter"
       Top             =   1800
@@ -32,7 +32,7 @@ Begin VB.Form MainFrm
    Begin VB.CommandButton Command5 
       Caption         =   "Test Button"
       Height          =   495
-      Left            =   6000
+      Left            =   10200
       TabIndex        =   10
       Top             =   1560
       Visible         =   0   'False
@@ -102,7 +102,7 @@ Begin VB.Form MainFrm
    End
    Begin VB.CommandButton Command3 
       BackColor       =   &H00FFFF80&
-      Caption         =   "v_ink_spec"
+      Caption         =   "3. Import Spec/designs v_ink_spec"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -121,7 +121,7 @@ Begin VB.Form MainFrm
    End
    Begin VB.CommandButton Command1 
       BackColor       =   &H0000FF00&
-      Caption         =   "SET MYSQL CONNECTION"
+      Caption         =   "1. Connect to the Job System"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -138,9 +138,9 @@ Begin VB.Form MainFrm
       Top             =   480
       Width           =   3615
    End
-   Begin VB.CommandButton Command2 
+   Begin VB.CommandButton Customers 
       BackColor       =   &H00FFFF80&
-      Caption         =   "v_ink_cust"
+      Caption         =   "2. Import customers v_ink_cust"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -173,16 +173,24 @@ Begin VB.Form MainFrm
       Top             =   2280
       Width           =   12495
    End
-   Begin VB.Label Label8 
-      Caption         =   "V2.02"
+   Begin VB.Label Label1 
+      Caption         =   "Counter"
       Height          =   255
-      Left            =   8280
+      Left            =   4920
+      TabIndex        =   12
+      Top             =   1800
+      Width           =   855
+   End
+   Begin VB.Label Label8 
+      Caption         =   "Version 2.03"
+      Height          =   255
+      Left            =   10680
       TabIndex        =   9
-      Top             =   1440
+      Top             =   0
       Width           =   1095
    End
    Begin VB.Label Label3 
-      Caption         =   "MySQL Connection String:"
+      Caption         =   "Job system MySQL database:"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   9
@@ -242,18 +250,19 @@ End Sub
 Private Sub Command1_Click()
 
 Answer2 = False
-
 Me.txtmysqlconnectionstring.Text = ""
 
 'Answer2 = EstablishMySQLConnection(Me.txtUsername.Text, Me.txtPassword.Text, Me.txtHost.Text, Me.txtDatabaseName.Text, Me.txtPort.Text, Me.TxtDriver.Text)
 Answer2 = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
-
-MsgBox "Connected to MySQL Server = " & Answer2
+If Answer2 = True Then
+  'MsgBox "Connected to MySQL Server = "
+Else
+  MsgBox "Could not connect to the mysql server "
+End If
 
 End Sub
 
-Private Sub Command2_Click()
+Private Sub Customers_Click()
 
 Dim MyView As String
 Dim CustCode As String
@@ -262,11 +271,9 @@ Dim CustAddress As String
 Dim ValueStr As String
 Dim HeaderStr As String
 
-WriteTraceLog ("Attempting to connect - Customers")
-
+WriteTraceLog ("Customers_Click - Attempting to connect - Customers")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
-WriteTraceLog ("Connection = " & Answer)
+WriteTraceLog ("Customers_Click Connection answer = " & Answer)
 
 If Answer = True Then
     
@@ -278,7 +285,7 @@ If Answer = True Then
 
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
        
-    WriteTraceLog ("Opended v_ink_cust")
+    WriteTraceLog ("Customers_Click Opended v_ink_cust")
        
        
     Do Until rst1.EOF
@@ -295,7 +302,7 @@ If Answer = True Then
                 Else
                     CustAddress = "NO CUSTOMER ADDRESS"
                 End If
-                WriteTraceLog ("Calling UpdateCustomer - " & CustCode & "," & CustName & "," & CustAddress)
+                WriteTraceLog ("Customers_Click UpdateCustomer - " & CustCode & "," & CustName & "," & CustAddress)
                 Call UpdateCustomer(CustCode, CustName)
                 
         End If
@@ -851,19 +858,19 @@ Call AddCustomer("NO CUSTOMER CODE", "NO CUSTOMER CODE")
 'Me.txtUsername.Text = "inovex"
 'Me.txtPort.Text = "3306"
 
-MsgBox "Form load done"
+'MsgBox "Form load done"
 End Sub
 
 Function WriteTraceLog(TraceText As String)
 
   'Me.List1.AddItem "Error see log for details"
-  
-  Const ForReading = 1, ForWriting = 2, ForAppending = 8, logdir = "Logs\CustomerTraceLog"
+  'TO DO App.Path ?
+  Const ForReading = 1, ForWriting = 2, ForAppending = 8, logd = "Logs", logdir = logd & "\CustomerTraceLog"
   Dim fso, f
   Set fso = CreateObject("Scripting.FileSystemObject")
   
-  If Not fso.folderexists("Logs") Then
-    MsgBox "Cannot open directory " & logdir
+  If Not fso.folderexists(logd) Then
+    'MsgBox "Cannot open directory " & logdir
   
   Else
    If Dir(logdir & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt") = "" Then
@@ -871,7 +878,7 @@ Function WriteTraceLog(TraceText As String)
         f.Close
    End If
    Set f = fso.OpenTextFile(logdir & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt", ForAppending, False)
-   f.WriteLine Now & "," & TraceText
+   f.WriteLine Now & " " & TraceText
    f.Close
   
   End If
@@ -1148,7 +1155,7 @@ If rstCust.RecordCount = 0 Then
     rstCust![customer name] = CustomerName
     rstCust.Update
     
-    WriteTraceLog ("Customer - " & CustomerCode & " added to table")
+    WriteTraceLog ("UpdateCustomer - " & CustomerCode & " added to table")
 
 Else
 
@@ -1156,8 +1163,7 @@ Else
     rstCust![customer name] = CustomerName
     rstCust.Update
 
-    WriteTraceLog ("Customer - " & CustomerCode & " customer name updated")
-
+    WriteTraceLog ("UpdateCustomer - " & CustomerCode & " customer name updated")
 
 End If
 
@@ -1381,9 +1387,7 @@ Dim MyLength As Integer
 Dim fso
 
     Counter = 0
-    
     Close #1
-    
     ListFile = App.Path & "\" & "Setups.txt"
     
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -1474,14 +1478,15 @@ Dim fso
 End Sub
 
 
-Private Sub Form_Unload(Cancel As Integer)
-
+Private Sub Form_Terminate()
+  'MsgBox "Job/Ink systems sync completed."
 End Sub
 
 Private Sub Timer1_Timer()
 
 ' THIS TIMER IS USED TO CLOSE THE PROGRAM AFTER IMPORT HAS FINISHED.
 
+' TODO For development, disable:
 Unload MainFrm
 Set MainFrm = Nothing
 
@@ -1494,9 +1499,13 @@ Private Sub Timer2_Timer()
     Me.List1.Clear
     Me.List2.Clear
     Me.List3.Clear
-    Call Command2_Click
-    Call Command3_Click
-    Call Command4_Click
-    Call Command5_Click
-    Me.Timer1.Enabled = True
+    
+    ' DEV: comment the following to disable automated execution
+    'Call Customers_Click
+    'Call Command3_Click
+    'Call Command4_Click
+    'Call Command5_Click
+    'Me.Timer1.Enabled = True
+    
+    'MsgBox "Job/Ink systems sync completed."
 End Sub

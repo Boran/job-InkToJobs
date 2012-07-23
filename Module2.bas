@@ -1,4 +1,4 @@
-Attribute VB_Name = "Connection"
+Attribute VB_Name = "MysqlConnection"
 Option Explicit
 
 'Declare public objects
