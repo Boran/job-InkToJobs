@@ -1406,7 +1406,7 @@ Private Sub Timer2_Timer()
     Me.List3.Clear
     
     ' DEV: comment the following to disable automated execution
-    If DebugLevel = 1 Then
+    If DebugLevel = 0 Then
         Call Customers_Click
         Call Command3_Click
         Call Command4_Click
