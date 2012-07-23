@@ -1,0 +1,10 @@
+Database Name : boranpla
+Driver : MySQL ODBC 5.1 Driver
+Host : 127.0.0.1
+Password : 
+UserName : root
+Port : 3306
+DispenserDatabasePath : Z:\_common\InkToJobs-5378\5378\5378_2007BE.mdb
+Default Print Process : Flexo
+Timer Counter Value : 3600
+Days To Look Back : 30
