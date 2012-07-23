@@ -1,15 +1,34 @@
 VERSION 5.00
 Begin VB.Form MainFrm 
    Caption         =   "Ink - Job System synchronisation"
-   ClientHeight    =   9675
+   ClientHeight    =   9825
    ClientLeft      =   1035
    ClientTop       =   645
    ClientWidth     =   13095
    Icon            =   "Form3.frx":0000
    LinkTopic       =   "Form3"
-   ScaleHeight     =   9675
+   ScaleHeight     =   9825
    ScaleWidth      =   13095
    WindowState     =   2  'Maximized
+   Begin VB.CommandButton Command5 
+      BackColor       =   &H00FFFF80&
+      Caption         =   "5. Export Costings"
+      BeginProperty Font 
+         Name            =   "Courier New"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   375
+      Left            =   0
+      Style           =   1  'Graphical
+      TabIndex        =   13
+      Top             =   9000
+      Width           =   3615
+   End
    Begin VB.Timer Timer2 
       Interval        =   5000
       Left            =   480
@@ -23,13 +42,12 @@ Begin VB.Form MainFrm
    End
    Begin VB.TextBox Text1 
       Height          =   285
-      Left            =   5880
+      Left            =   6120
       TabIndex        =   11
-      Text            =   "Counter"
       Top             =   1800
-      Width           =   1455
+      Width           =   2175
    End
-   Begin VB.CommandButton Command5 
+   Begin VB.CommandButton Command5_test 
       Caption         =   "Test Button"
       Height          =   495
       Left            =   10200
@@ -40,18 +58,18 @@ Begin VB.Form MainFrm
    End
    Begin VB.TextBox txtmysqlconnectionstring 
       Appearance      =   0  'Flat
-      BackColor       =   &H00E0E0E0&
+      BackColor       =   &H8000000B&
       BorderStyle     =   0  'None
-      Height          =   735
+      Height          =   495
       Left            =   4920
       MultiLine       =   -1  'True
       TabIndex        =   8
-      Top             =   480
+      Top             =   720
       Width           =   6855
    End
    Begin VB.CommandButton Command4 
       BackColor       =   &H00FFFF80&
-      Caption         =   "v_ink_job"
+      Caption         =   "4. Import Jobs"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -78,7 +96,7 @@ Begin VB.Form MainFrm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2370
+      Height          =   1740
       Left            =   0
       TabIndex        =   6
       Top             =   6960
@@ -102,7 +120,7 @@ Begin VB.Form MainFrm
    End
    Begin VB.CommandButton Command3 
       BackColor       =   &H00FFFF80&
-      Caption         =   "3. Import Spec/designs v_ink_spec"
+      Caption         =   "3. Import Spec/designs"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -120,7 +138,7 @@ Begin VB.Form MainFrm
       Width           =   3615
    End
    Begin VB.CommandButton Command1 
-      BackColor       =   &H0000FF00&
+      BackColor       =   &H8000000A&
       Caption         =   "1. Connect to the Job System"
       BeginProperty Font 
          Name            =   "Courier New"
@@ -140,7 +158,7 @@ Begin VB.Form MainFrm
    End
    Begin VB.CommandButton Customers 
       BackColor       =   &H00FFFF80&
-      Caption         =   "2. Import customers v_ink_cust"
+      Caption         =   "2. Import customers"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -173,13 +191,20 @@ Begin VB.Form MainFrm
       Top             =   2280
       Width           =   12495
    End
+   Begin VB.Label TextSql 
+      Height          =   255
+      Left            =   4800
+      TabIndex        =   14
+      Top             =   1320
+      Width           =   7095
+   End
    Begin VB.Label Label1 
       Caption         =   "Counter"
       Height          =   255
       Left            =   4920
       TabIndex        =   12
       Top             =   1800
-      Width           =   855
+      Width           =   1095
    End
    Begin VB.Label Label8 
       Caption         =   "Version 2.03"
@@ -203,7 +228,7 @@ Begin VB.Form MainFrm
       Height          =   255
       Left            =   4920
       TabIndex        =   3
-      Top             =   120
+      Top             =   480
       Width           =   2895
    End
 End
@@ -233,7 +258,7 @@ Dim PrintProcess As String
 Dim db As Database
 Dim Timer2Counter As Integer
 Dim Timer2CounterStart As Integer
-Dim DaysToLook As Integer
+Dim DaysToLook, DebugLevel As Integer
 
 
 Public Sub TerminateConnection()
@@ -242,8 +267,6 @@ Public Sub TerminateConnection()
     g_MySQLConn.Close
     Set g_MySQLConn = Nothing
     Set g_MySQLError = Nothing
-    
-        
 End Sub
 
 
@@ -252,7 +275,6 @@ Private Sub Command1_Click()
 Answer2 = False
 Me.txtmysqlconnectionstring.Text = ""
 
-'Answer2 = EstablishMySQLConnection(Me.txtUsername.Text, Me.txtPassword.Text, Me.txtHost.Text, Me.txtDatabaseName.Text, Me.txtPort.Text, Me.TxtDriver.Text)
 Answer2 = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 If Answer2 = True Then
   'MsgBox "Connected to MySQL Server = "
@@ -270,28 +292,28 @@ Dim CustName As String
 Dim CustAddress As String
 Dim ValueStr As String
 Dim HeaderStr As String
+Dim Counter As Integer
 
-WriteTraceLog ("Customers_Click - Attempting to connect - Customers")
+Me.Label1 = "Customers"
+WriteTraceLog ("Customers_Click connect to mysql " & MySQLDatabaseName)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 WriteTraceLog ("Customers_Click Connection answer = " & Answer)
 
 If Answer = True Then
-    
-    HeaderStr = "Customer Code" & vbTab & vbTab & "Customer Name" & vbTab & vbTab & "Customer Address"
-    
-    Me.List1.AddItem HeaderStr
+    HeaderStr = "Customer Code" & vbTab & "Customer Name" & vbTab & vbTab & "Customer Address"
+    Me.List1.AddItem HeaderStr & "(from v_ink_cust)"
     
     MyView = "`v_ink_cust`"
-
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    WriteTraceLog ("Customers_Click Opened v_ink_cust")
        
-    WriteTraceLog ("Customers_Click Opended v_ink_cust")
-       
-       
+    Me.Label1 = "Customers:"
     Do Until rst1.EOF
-             
-        If Not IsNull(rst1![cust_code]) Then
-                CustCode = rst1![cust_code]
+        Counter = Counter + 1
+        Me.Text1 = Counter
+       
+        If Not IsNull(rst1![Cust_code]) Then
+                CustCode = rst1![Cust_code]
                 If Not IsNull(rst1![Name]) Then
                     CustName = rst1![Name]
                 Else
@@ -302,13 +324,13 @@ If Answer = True Then
                 Else
                     CustAddress = "NO CUSTOMER ADDRESS"
                 End If
-                WriteTraceLog ("Customers_Click UpdateCustomer - " & CustCode & "," & CustName & "," & CustAddress)
-                Call UpdateCustomer(CustCode, CustName)
                 
+                WriteTraceLog ("Customers_Click UpdateCustomer - " & CustCode & "," & CustName & "," & CustAddress)
+                Me.Text1 = Counter & " " & CustName
+                Call UpdateCustomer(CustCode, CustName)
         End If
 
         ValueStr = CustCode & vbTab & vbTab & CustName & vbTab & vbTab & CustAddress
-        
         Me.List1.AddItem ValueStr
 
         rst1.MoveNext
@@ -354,14 +376,12 @@ Dim LengthOfString As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
-    
-    
     MyNewView = "SELECT DISTINCT Printer from v_ink_spec"
 
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
-    Me.List2.AddItem "CONNECTED"
+    'Me.List2.AddItem "CONNECTED"
       
+    Me.Label1 = "Printers:"
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
@@ -373,22 +393,13 @@ If Answer = True Then
         End If
         
         Me.List2.AddItem "Checking Printer " & Printer
-        
-        WriteDesignTraceLog ("Calling Function AddPress " & Printer)
-        
+        'WriteDesignTraceLog ("Calling AddPress " & Printer)
         Call AddPress(Printer, Printer)
         
         rst1.MoveNext
     Loop
-        
-        
-    
-            
-        'WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))
-            
-
+    'WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))
     Call TerminateConnection
-
 End If
 
 Call AddCustomers
@@ -424,40 +435,30 @@ Dim Counter As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
-    
-    
     MyView = "`v_ink_spec`"
-
     MyNewView = "SELECT DISTINCT cust_code from v_ink_spec"
 
-
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
-    Me.List2.AddItem "CONNECTED ADD CUSTOMERS"
-      
+    Me.List2.AddItem "AddCustomers"
+    
+    Me.Label1 = "Customers:"
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
         DoEvents
         
-        If Not IsNull(rst1![cust_code]) Then
-            CustCode = rst1![cust_code]
+        If Not IsNull(rst1![Cust_code]) Then
+            CustCode = rst1![Cust_code]
         Else
             CustCode = "NO CUSTOMER CODE"
         End If
 
-        Me.List2.AddItem "Checking Customer " & CustCode
-
-        WriteDesignTraceLog ("Calling Function AddCustomer " & CustCode)
-
+        Me.List2.AddItem "Checking Customer: " & CustCode
+        'WriteDesignTraceLog ("Calling AddCustomer " & CustCode)
         Call AddCustomer(CustCode, CustCode)
         
         rst1.MoveNext
-    
     Loop
-
-    
-
     Call TerminateConnection
 End If
 
@@ -495,17 +496,12 @@ Dim Counter As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
-    
-    
+    Me.List2.AddItem "AddInkTypes from v_ink_spec"
     MyView = "`v_ink_spec`"
-
     MyNewView = "SELECT DISTINCT inktype from v_ink_spec"
-
-
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
-    Me.List2.AddItem "CONNECTED ADD INKTYPES"
       
+    Me.Label1 = "inktypes:"
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
@@ -518,16 +514,11 @@ If Answer = True Then
         End If
 
         Me.List2.AddItem "Checking InkType " & InkCode
-
-        WriteDesignTraceLog ("Calling Function AddInkType " & InkCode)
-
+        'WriteDesignTraceLog ("Calling AddInkType " & InkCode)
         Call AddInkType(InkCode)
         
         rst1.MoveNext
-    
     Loop
-
-    
 
     Call TerminateConnection
 End If
@@ -566,16 +557,14 @@ Dim Counter As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
-    
-       
     MyView = "`v_ink_spec`"
-    
     MyNewView = "SELECT DISTINCT Substrate FROM v_ink_spec"
-
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
        
-    Me.List2.AddItem "CONNECTED ADD SUBSTRATES"
+    Me.List2.AddItem "AddSubstrates: Substrate FROM v_ink_spec "
             
+            
+    Me.Label1 = "Substrates:"
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
@@ -588,18 +577,12 @@ If Answer = True Then
         End If
 
         Me.List2.AddItem "Checking Substrate " & Substrate
-
-        WriteDesignTraceLog ("Calling Function UpdateSubstrate " & Substrate)
-
+        WriteDesignTraceLog ("Calling UpdateSubstrate " & Substrate)
         Call UpdateSubstrate(Substrate)
         
         rst1.MoveNext
-    
     Loop
      
-      
-      
-
     Call TerminateConnection
 End If
 
@@ -639,20 +622,16 @@ Dim LengthOfString As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
-    
     'HeaderStr = "Spec" & " | " & "Customer Code" & " | " & "Design"
     HeaderStr = "Spec" & vbTab & vbTab & "Customer Code" & vbTab & vbTab & "Design"
-    
     Me.List2.AddItem HeaderStr
-    
     Me.List2.AddItem ""
     
     MyView = "`v_ink_spec`"
-
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
-    Me.List2.AddItem "CONNECTED"
+    'Me.List2.AddItem "AddDesigns "
       
+    Me.Label1 = "Specs:"
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
@@ -662,8 +641,8 @@ If Answer = True Then
         
         If Not IsNull(rst1![Spec]) Then
             Spec = rst1![Spec]
-            If Not IsNull(rst1![cust_code]) Then
-                CustCode = rst1![cust_code]
+            If Not IsNull(rst1![Cust_code]) Then
+                CustCode = rst1![Cust_code]
             Else
                 CustCode = "NO CUSTOMER CODE"
             End If
@@ -741,23 +720,19 @@ If Answer = True Then
             'Call AddPress(Printer, Printer)
             'Call AddCustomer(CustCode, CustCode)
             'Call UpdateSubstrate(Substrate)
-            WriteDesignTraceLog "Calling Function Update Design"
-            
+            WriteDesignTraceLog "Calling UpdateDesign"
             Call UpdateDesign(Spec, Design, CustCode, Substrate, Printer, CSng(PrWidth), CSng(PrRepeat), CDate(LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear), LastChange24, MyComment, DesignImage, InkType)
 
         End If
-            
 
         'ValueStr = Spec & " | " & CustCode & " | " & Design
         ValueStr = Spec & vbTab & vbTab & CustCode & vbTab & vbTab & Design
         
         Me.List2.AddItem ValueStr
-
         rst1.MoveNext
     Loop
 
     rst1.Close
-
     Call TerminateConnection
 End If
 
@@ -774,34 +749,28 @@ Dim CustCode As String
 Dim Design As String
 Dim ValueStr As String
 Dim HeaderStr As String
+Dim Counter As Integer
 
 
-WriteJobsTraceLog ("Attempting to connect - Jobs")
-
+WriteJobsTraceLog ("Command4_Click Attempting to connect - v_ink_job")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
-WriteJobsTraceLog ("Connection = " & Answer)
+'WriteJobsTraceLog ("Connection = " & Answer)
 
 If Answer = True Then
+    'WriteJobsTraceLog ("Connection = " & Answer)
     
-    WriteJobsTraceLog ("Connection = " & Answer)
-  
-    HeaderStr = "Job" & vbTab & vbTab & "Spec" & vbTab & vbTab & "Del Date" & vbTab & vbTab & "Customer Code" & vbTab & vbTab & "Design"
-    
+    HeaderStr = "Job" & vbTab & vbTab & "Spec" & vbTab & vbTab & "Del Date" & vbTab & vbTab & "Customer Code" & vbTab & "Design"
     Me.List3.AddItem HeaderStr
-        
     MyView = "`v_ink_job`"
-
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
-    WriteJobsTraceLog ("Opended v_ink_job")
       
+    Me.Label1 = "Jobs:"
     Do Until rst1.EOF
-    
-        
+        Counter = Counter + 1
+        Me.Text1 = Counter
+      
         If Not IsNull(rst1![job]) Then
             job = rst1![job]
-            
           
             If Not IsNull(rst1![Spec]) Then
                 Spec = rst1![Spec]
@@ -811,22 +780,21 @@ If Answer = True Then
                     
         End If
         
-        WriteJobsTraceLog (job & "," & Spec & "," & DelDate & "," & CustCode & "," & Design)
+        WriteJobsTraceLog (job & "," & Spec & "," & rst1![Date] & "," & rst1![Cust_code] & "," & rst1![Design])
 
         'ValueStr = Spec & " | " & CustCode & " | " & Design
-        ValueStr = job & vbTab & vbTab & Spec & vbTab & vbTab & DelDate & vbTab & vbTab & CustCode & vbTab & vbTab & Design
-        
+        'ValueStr = job & vbTab & vbTab & Spec & vbTab & vbTab & DelDate & vbTab & vbTab & CustCode & vbTab & vbTab & Design
+        ValueStr = job & vbTab & vbTab & Spec & vbTab & vbTab & rst1![Date] & vbTab & vbTab & rst1![Cust_code] & vbTab & vbTab & rst1![Design]
         Me.List3.AddItem ValueStr
         
-        WriteJobsTraceLog ("Calling AddJob - " & job & "  -  " & Spec)
-        
+        If DebugLevel = 1 Then
+            WriteJobsTraceLog ("Calling AddJob - " & job & "  -  " & Spec)
+        End If
         Call AddJob(job, Spec)
-
         rst1.MoveNext
     Loop
 
     rst1.Close
-
     Call TerminateConnection
 End If
 
@@ -836,8 +804,6 @@ End Sub
 
 
 Private Sub Form_Load()
-
-
 
 Me.WindowState = 1
 
@@ -890,7 +856,6 @@ Function WriteDesignTraceLog(TraceText As String)
 
   'Me.List1.AddItem "Error see log for details"
 
-  
   Const ForReading = 1, ForWriting = 2, ForAppending = 8
   Dim fso, f
   Set fso = CreateObject("Scripting.FileSystemObject")
@@ -907,7 +872,6 @@ End Function
 
 Function WriteJobsTraceLog(TraceText As String)
 
-    
   'Me.List1.AddItem "Error see log for details"
   
   Const ForReading = 1, ForWriting = 2, ForAppending = 8
@@ -956,21 +920,17 @@ Dim LacquerCostI As Single
 Dim ActualCost1000I As Single
 Dim Counter As Long
 
-WriteExportTraceLog ("Entered Instert data")
-
-
+WriteExportTraceLog ("Command5_Click Entered Insert data")
 
 Set db = OpenDatabase(AccessDBPath)
-
 Set rst = db.OpenRecordset("SELECT [Costing Reports Details].[Date Closed], [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Closed] Between Date()-" & DaysToLook & " And Date() ORDER BY [Costing Reports Details].[Date Closed] DESC")
+WriteExportTraceLog ("Command5_Click SELECT from 'Costing Reports Details' access")
 
-WriteExportTraceLog ("Executed ACCESS SELECT")
-
+Me.Label1 = "Costings:"
+Me.Text1 = "0"
 
 If rst.RecordCount <> 0 Then
-
 Do Until rst.EOF
-
     Counter = Counter + 1
     Me.Text1 = "INSERT " & Counter
 
@@ -1016,14 +976,12 @@ Do Until rst.EOF
     DesignNameI = Replace(DesignNameI, "'", "`")
     CustomerI = Replace(CustomerI, "'", "`")
     
-    WriteExportTraceLog ("Call InsertData Works Order = " & WorksOrderNumberI)
-    
-    
-    
+    WriteExportTraceLog ("Command5_Click Call InsertData Works Order = " & WorksOrderNumberI)
     Call InsertData(WorksOrderNumberI, DesignCodeI, DesignNameI, InkWeightI, DateOpenedI, CustomerI, WhiteWeightI, ColoursWeightI, LacquerWeightI, OtherWeightI, ReturnsReturnedI, ReturnsReturnedCostI, ReturnsIssuedI, ReturnsIssuedtoJobCostI, TotalTargetCostI, TargetCostPer1000sqmI, InkCostI, TotalCostI, EstimatedSQMI, SQMI, WhitesCostI, ColoursCostI, LacquerCostI, ActualCost1000I, DateClosedI)
     
-    WriteExportTraceLog ("Moving to next record")
-    
+    If DebugLevel = 1 Then
+      WriteExportTraceLog ("Command5_Click Moving to next record")
+    End If
     rst.MoveNext
 Loop
 
@@ -1047,81 +1005,52 @@ Dim MyNewDate As String
 Dim MyNewDateClosed As String
 
 
-
 MyNewDate = Format(DateOpened, "yyyy/mm/dd")
 MyNewDateClosed = Format(DateClosed, "yyyy/mm/dd")
 
-WriteExportTraceLog ("Connecting to SQL Server")
-
-
+WriteExportTraceLog ("InsertData Connecting to SQL Server")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 'Answer = EstablishMySQLConnection("root", "CTRecord", "IBM1", "Boranpla", 3306, "MySQL ODBC 5.1 Driver")
 
 
-
 If Answer = True Then
-
-WriteExportTraceLog ("Connection = " & Answer)
-
-
-rst.CursorLocation = adUseClient
-
-
-StrSQL = "SELECT `works order number` FROM `ink_costing reports details` WHERE `works order number` ='" & worksorder & "'"
-
-
-rst.Open StrSQL, g_MySQLConn, adOpenKeyset, adLockOptimistic
-
-WriteExportTraceLog ("Checking Works Order " & worksorder & " Exists on MySQL Server")
-
-NoRecord = False
+    'WriteExportTraceLog ("InsertData Connection = " & Answer)
+    rst.CursorLocation = adUseClient
     
-Do Until rst.EOF
-
-WriteExportTraceLog ("Works Order " & worksorder & " Exists")
-
-NoRecord = True
-
-rst.MoveNext
-
-Loop
+    StrSQL = "SELECT `works order number` FROM `ink_costing reports details` WHERE `works order number` ='" & worksorder & "'"
+    rst.Open StrSQL, g_MySQLConn, adOpenKeyset, adLockOptimistic
+    
+    WriteExportTraceLog ("InsertData Checking Works Order " & worksorder & " Exists on MySQL Server")
+    NoRecord = False
+    Do Until rst.EOF
+        WriteExportTraceLog ("InsertData Works Order " & worksorder & " Exists")
+        NoRecord = True
+        rst.MoveNext
+    Loop
 
 End If
 
 If NoRecord = False Then
 
-WriteExportTraceLog ("Setting INSERT statement for worksorder = " & worksorder)
-
-StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`,`ink cost`,`total cost`,`estimated sqm`,`sqm`,`whites cost`,`colours cost`,`lacquer cost`,`Actual Cost per 1000sqm ex uplift`,`Date Closed`)" & _
-" VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "','" & InkCost & "','" & TotalCost & "','" & EstimatedSQM & "','" & SQM & "','" & WhitesCost & "','" & ColoursCost & "','" & LacquerCost & "','" & ACper1000 & "','" & MyNewDateClosed & "' )"
-'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "')"
-'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "','" & designname & "', '" & inkweight & "', '" & MyNewDate & "','" & Customer & "','" & WhiteWeight & "','" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "')"
-
-
-WriteExportTraceLog ("Set INSERT statement")
-
-rst1.Open StrSQL, g_MySQLConn, adOpenDynamic, adLockOptimistic
-
-WriteExportTraceLog ("INSERT statement executed for works order = " & worksorder)
-
-
-Call TerminateConnection
-
-
+    WriteExportTraceLog ("Setting INSERT statement for worksorder = " & worksorder)
+    
+    StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`,`ink cost`,`total cost`,`estimated sqm`,`sqm`,`whites cost`,`colours cost`,`lacquer cost`,`Actual Cost per 1000sqm ex uplift`,`Date Closed`)" & _
+    " VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "','" & InkCost & "','" & TotalCost & "','" & EstimatedSQM & "','" & SQM & "','" & WhitesCost & "','" & ColoursCost & "','" & LacquerCost & "','" & ACper1000 & "','" & MyNewDateClosed & "' )"
+    'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "')"
+    'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "','" & designname & "', '" & inkweight & "', '" & MyNewDate & "','" & Customer & "','" & WhiteWeight & "','" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "')"
+    
+    
+    WriteExportTraceLog ("InsertData INTO `ink_costing reports details`")
+    rst1.Open StrSQL, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    WriteExportTraceLog ("InsertData INSERT statement executed for works order = " & worksorder)
+    
+    Call TerminateConnection
 End If
-
-
-
-
-
-
-
 
 End Sub
 
 Function WriteExportTraceLog(TraceText As String)
 
-    
   'Me.List1.AddItem "Error see log for details"
   
   Const ForReading = 1, ForWriting = 2, ForAppending = 8
@@ -1133,8 +1062,7 @@ Function WriteExportTraceLog(TraceText As String)
   End If
   
   Set f = fso.OpenTextFile("Logs\ExportTraceLog " & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt", ForAppending, False)
-  f.WriteLine Now & "," & TraceText
-  'f.WriteLine TraceText
+  f.WriteLine Now & " " & TraceText
   
   f.Close
 
@@ -1145,26 +1073,22 @@ Dim db As Database
 Dim rstCust As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 
 If rstCust.RecordCount = 0 Then
-
     rstCust.AddNew
     rstCust![Customer Code] = CustomerCode
     rstCust![customer name] = CustomerName
     rstCust.Update
     
-    WriteTraceLog ("UpdateCustomer - " & CustomerCode & " added to table")
-
+    WriteTraceLog ("UpdateCustomer " & CustomerCode & " added ")
 Else
-
     rstCust.Edit
     rstCust![customer name] = CustomerName
     rstCust.Update
-
-    WriteTraceLog ("UpdateCustomer - " & CustomerCode & " customer name updated")
-
+    If DebugLevel = 1 Then
+      WriteTraceLog ("UpdateCustomer " & CustomerCode & " customer name updated")
+    End If
 End If
 
 rstCust.Close
@@ -1176,16 +1100,13 @@ Dim db As Database
 Dim rstCust As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 
 If rstCust.RecordCount = 0 Then
-
     rstCust.AddNew
     rstCust![Customer Code] = CustomerCode
     rstCust![customer name] = CustomerName
     rstCust.Update
-
 End If
 
 rstCust.Close
@@ -1197,15 +1118,12 @@ Dim db As Database
 Dim rstInk As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 Set rstInk = db.OpenRecordset("SELECT * FROM [Ink Type] WHERE [Ink Type] = '" & InkTypeCode & "'")
 
 If rstInk.RecordCount = 0 Then
-
     rstInk.AddNew
     rstInk![Ink Type] = InkTypeCode
     rstInk.Update
-
 End If
 
 rstInk.Close
@@ -1217,16 +1135,13 @@ Dim db As Database
 Dim rstPress As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 Set rstPress = db.OpenRecordset("SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'")
 
 If rstPress.RecordCount = 0 Then
-
     rstPress.AddNew
     rstPress![Press Number] = PressCode
     rstPress![Press name] = PressName
     rstPress.Update
-
 End If
 
 rstPress.Close
@@ -1240,22 +1155,19 @@ Dim db As Database
 Dim rstDesign As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 designname = Replace(designname, "'", "`")
 designname = Left(designname, 50)
 Substrate = Replace(Substrate, "'", " ")
-
 Set rstDesign = db.OpenRecordset("SELECT * FROM [Designs] WHERE [Design code] = '" & designcode & "'")
 
 If rstDesign.RecordCount <> 0 Then
-    
-    WriteDesignTraceLog ("Editing design " & designcode)
+    WriteDesignTraceLog ("UpdateDesign " & designcode)
     
     rstDesign.Edit
     If designname <> "" Then
-    rstDesign![design name] = designname
+        rstDesign![design name] = designname
     Else
-    rstDesign![design name] = "NO DESIGN NAME"
+        rstDesign![design name] = "NO DESIGN NAME"
     End If
     rstDesign![Customer] = Customer
     rstDesign![Substrate] = Substrate
@@ -1265,26 +1177,25 @@ If rstDesign.RecordCount <> 0 Then
     rstDesign![Date Amended] = CDate(DateAmended)
     rstDesign![Time Amended] = CDate(TimeAmended)
     If MyInkType <> "" Then
-    rstDesign![Category] = MyInkType
+        rstDesign![Category] = MyInkType
     End If
     rstDesign![Print Process] = PrintProcess
     rstDesign![Comments] = Comments
     rstDesign![Image Path] = ImagePath
     rstDesign.Update
     
-    WriteDesignTraceLog ("Design - " & designcode & " Updated")
-    
-   
+    If DebugLevel = 1 Then
+        WriteDesignTraceLog ("UpdateDesign/spec " & designcode & " Updated")
+    End If
 Else
-    
-    WriteDesignTraceLog ("Adding New Design " & designcode)
+    WriteDesignTraceLog ("UpdateDesign/spec New Spec: " & designcode)
     
     rstDesign.AddNew
     rstDesign![design code] = designcode
     If designname <> "" Then
-    rstDesign![design name] = designname
+        rstDesign![design name] = designname
     Else
-    rstDesign![design name] = "NO DESIGN NAME"
+        rstDesign![design name] = "NO DESIGN NAME"
     End If
     rstDesign![Customer] = Customer
     rstDesign![Substrate] = Substrate
@@ -1295,16 +1206,16 @@ Else
     rstDesign![Date Amended] = CDate(DateAmended)
     rstDesign![Time Amended] = CDate(TimeAmended)
     If MyInkType <> "" Then
-    rstDesign![Category] = MyInkType
+        rstDesign![Category] = MyInkType
     End If
     rstDesign![Print Process] = PrintProcess
     rstDesign![Comments] = Comments
     rstDesign![Image Path] = ImagePath
     rstDesign.Update
     
-    WriteDesignTraceLog ("Design - " & designcode & " Added")
-    
-    
+    If DebugLevel = 1 Then
+        WriteDesignTraceLog ("UpdateDesign " & designcode & " Added")
+    End If
 End If
 
 rstDesign.Close
@@ -1317,24 +1228,18 @@ Dim db As Database
 Dim rstSubs As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
 SubstrateCode = Replace(SubstrateCode, "'", " ")
-
 Set rstSubs = db.OpenRecordset("SELECT * FROM [Substrates] WHERE [Substrate code] = '" & SubstrateCode & "'")
 
 If rstSubs.RecordCount <> 0 Then
-
     'MsgBox "Substrate Exists"
-    
 Else
-
     'MsgBox "Substrate Does Not Exist"
     rstSubs.AddNew
     rstSubs![substrate code] = SubstrateCode
     rstSubs![substrate name] = SubstrateCode
     
     rstSubs.Update
-    
 End If
 
 rstSubs.Close
@@ -1349,27 +1254,20 @@ Dim db As Database
 Dim rstJobs As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-
-
 Set rstJobs = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Works Order Number] = '" & worksorder & "'")
 
 If rstJobs.RecordCount <> 0 Then
-
-    WriteJobsTraceLog ("Job - " & worksorder & " Already exists on the database.")
-    
+    If DebugLevel = 1 Then
+        WriteJobsTraceLog ("AddJob " & worksorder & " Already exists on the ink system")
+    End If
 Else
-
-
     rstJobs.AddNew
     rstJobs![works order number] = worksorder
     rstJobs![design code] = designcode
     rstJobs![Date Created] = Date
     rstJobs.Update
     
-    WriteJobsTraceLog ("Job - " & worksorder & " Added to the database.")
-    
-    
-    
+    WriteJobsTraceLog ("AddJob " & worksorder & " Added ")
 End If
 
 rstJobs.Close
@@ -1379,28 +1277,31 @@ db.Close
 End Function
 
 Private Sub LoadSetups()
-Dim InputData As String
-Dim Counter As Double
-Dim ListFile As String
-Dim MyPos As Integer
-Dim MyLength As Integer
-Dim fso
+    Dim InputData As String
+    Dim Counter As Double
+    Dim ListFile As String
+    Dim MyPos As Integer
+    Dim MyLength As Integer
+    Dim fso
 
     Counter = 0
+    DebugLevel = 0
+    
     Close #1
-    ListFile = App.Path & "\" & "Setups.txt"
+    ListFile = App.Path & "\" & "setups.txt"
     
     Set fso = CreateObject("Scripting.FileSystemObject")
     If (fso.FileExists(ListFile)) Then
     
     Else
-        MsgBox ListFile & " is not available!", vbCritical, "ComputerTel Ltd"
+        MsgBox ListFile & " is not available!", vbCritical, "InkToJob"
         Exit Sub
     End If
 
     Open ListFile For Input As #1   ' Open file for input.
     
-    ' TODO: Varaibles are expected in sequential order, horrible. There must be a general way of read ini files?
+    ' TODO: Variables are expected in sequential order, horrible.
+    ' There must be a general way of reading ini files?
     
     Line Input #1, InputData   ' Read first line of data.
     ' A binary comparison starting at position 1.
@@ -1472,6 +1373,12 @@ Dim fso
     InputData = Trim(Right(InputData, (MyLength - MyPos)))
     'Me.TxtDatabasePath.Text = InputData
     DaysToLook = InputData
+    
+    Line Input #1, InputData   ' Read line of data.
+    MyPos = InStr(1, InputData, ":", 0)
+    MyLength = Len(InputData)
+    InputData = Trim(Right(InputData, (MyLength - MyPos)))
+    DebugLevel = InputData
 
     Close #1   ' Close file.
 
@@ -1483,13 +1390,11 @@ Private Sub Form_Terminate()
 End Sub
 
 Private Sub Timer1_Timer()
-
-' THIS TIMER IS USED TO CLOSE THE PROGRAM AFTER IMPORT HAS FINISHED.
-
-' TODO For development, disable:
-Unload MainFrm
-Set MainFrm = Nothing
-
+    ' THIS TIMER IS USED TO CLOSE THE PROGRAM AFTER IMPORT HAS FINISHED.
+    
+    ' TODO For development, disable:
+    Unload MainFrm
+    Set MainFrm = Nothing
 End
 
 End Sub
@@ -1501,11 +1406,13 @@ Private Sub Timer2_Timer()
     Me.List3.Clear
     
     ' DEV: comment the following to disable automated execution
-    'Call Customers_Click
-    'Call Command3_Click
-    'Call Command4_Click
-    'Call Command5_Click
-    'Me.Timer1.Enabled = True
+    If DebugLevel = 1 Then
+        Call Customers_Click
+        Call Command3_Click
+        Call Command4_Click
+        Call Command5_Click
+        Me.Timer1.Enabled = True
+    End If
     
-    'MsgBox "Job/Ink systems sync completed."
+    'MsgBox "Job/Ink system sync completed."
 End Sub
