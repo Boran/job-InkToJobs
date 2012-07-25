@@ -256,9 +256,7 @@ Dim MySQLHost As String
 Dim AccessDBPath As String
 Dim PrintProcess As String
 Dim db As Database
-Dim Timer2Counter As Integer
-Dim Timer2CounterStart As Integer
-Dim DaysToLook, DebugLevel As Integer
+Dim Timer2Counter, Timer2CounterStart, DaysToLook, DebugLevel As Integer
 
 
 Public Sub TerminateConnection()
@@ -766,16 +764,19 @@ If Answer = True Then
       
     Me.Label1 = "Jobs:"
     Do Until rst1.EOF
-        Counter = Counter + 1
+        Counter = Counter + 1    ' Show the number of jobs being processed
         Me.Text1 = Counter
       
         If Not IsNull(rst1![job]) Then
             job = rst1![job]
           
-            If Not IsNull(rst1![Spec]) Then
+            If Not IsNull(rst1![Spec]) And (rst1![Spec] > 0) Then
                 Spec = rst1![Spec]
             Else
-                Spec = "   "
+                'Spec = "   "
+                ' TODO
+                ' Design 99 is a dummy, that exists, to allow a valid db ref
+                Spec = "99"
             End If
                     
         End If
@@ -788,7 +789,7 @@ If Answer = True Then
         Me.List3.AddItem ValueStr
         
         If DebugLevel = 1 Then
-            WriteJobsTraceLog ("Calling AddJob - " & job & "  -  " & Spec)
+            WriteJobsTraceLog ("Calling AddJob Job=" & job & " Spec=" & Spec)
         End If
         Call AddJob(job, Spec)
         rst1.MoveNext
