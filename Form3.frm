@@ -207,12 +207,12 @@ Begin VB.Form MainFrm
       Width           =   1095
    End
    Begin VB.Label Label8 
-      Caption         =   "Version 2.03"
-      Height          =   255
-      Left            =   10680
+      Caption         =   "Version 2.04 / 2016.06.16/SB"
+      Height          =   375
+      Left            =   9360
       TabIndex        =   9
       Top             =   0
-      Width           =   1095
+      Width           =   2415
    End
    Begin VB.Label Label3 
       Caption         =   "Job system MySQL database:"
@@ -775,7 +775,7 @@ If Answer = True Then
             Else
                 'Spec = "   "
                 ' TODO
-                ' Design 99 is a dummy, that exists, to allow a valid db ref
+                ' Design 99 is a dummy that exists to allow a valid db ref
                 Spec = "99"
             End If
                     
@@ -884,7 +884,7 @@ Function WriteJobsTraceLog(TraceText As String)
   End If
   
   Set f = fso.OpenTextFile("Logs\JobsTraceLog " & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt", ForAppending, False)
-  f.WriteLine Now & "," & TraceText
+  f.WriteLine Now & " " & TraceText
   'f.WriteLine TraceText
   
   f.Close
@@ -961,7 +961,12 @@ Do Until rst.EOF
     TotalTargetCostI = rst![totaltargetcost]
     TargetCostPer1000sqmI = rst![TargetCostPer1000sqm]
     InkCostI = rst![Ink Cost]
-    TotalCostI = rst![Total Cost]
+    'TotalCostI = rst![Total Cost]
+    If Not IsNull(rst![Total Cost]) Then
+        TotalCostI = rst![Total Cost]
+    Else
+        TotalCostI = 0
+    End If
     If Not IsNull(rst![Estimated SQM]) Then
         EstimatedSQMI = rst![Estimated SQM]
     Else
@@ -971,7 +976,12 @@ Do Until rst.EOF
     WhitesCostI = rst![whites cost]
     ColoursCostI = rst![colours cost]
     LacquerCostI = rst![lacquer cost]
-    ActualCost1000I = rst![Actual Cost per 1000sqm ex uplift]
+    'ActualCost1000I = rst![Actual Cost per 1000sqm ex uplift]
+    If Not IsNull(rst![Actual Cost per 1000sqm ex uplift]) Then
+        ActualCost1000I = rst![Actual Cost per 1000sqm ex uplift]
+    Else
+        ActualCost1000I = 0
+    End If
     
     
     DesignNameI = Replace(DesignNameI, "'", "`")
@@ -1253,22 +1263,30 @@ Function AddJob(worksorder As String, designcode As String)
 
 Dim db As Database
 Dim rstJobs As DAO.Recordset
+Dim rstDesign As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
 Set rstJobs = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Works Order Number] = '" & worksorder & "'")
 
 If rstJobs.RecordCount <> 0 Then
     If DebugLevel = 1 Then
-        WriteJobsTraceLog ("AddJob " & worksorder & " Already exists on the ink system")
+        WriteJobsTraceLog ("AddJob " & worksorder & " already exists on the ink system")
     End If
 Else
-    rstJobs.AddNew
-    rstJobs![works order number] = worksorder
-    rstJobs![design code] = designcode
-    rstJobs![Date Created] = Date
-    rstJobs.Update
-    
-    WriteJobsTraceLog ("AddJob " & worksorder & " Added ")
+    WriteJobsTraceLog ("AddJob new job=" & worksorder & " design/spec=" & designcode & " date=" & Date)
+    Set rstDesign = db.OpenRecordset("SELECT * FROM [Designs] WHERE [Design code] = '" & designcode & "'")
+    If rstDesign.RecordCount = 0 Then
+        WriteJobsTraceLog ("AddJob ERROR cannot add job=" & worksorder & " invalid spec=" & designcode)
+        Me.List3.AddItem "ERROR cannot add job=" & worksorder & " invalid spec=" & designcode
+    Else
+        rstJobs.AddNew
+        rstJobs![works order number] = worksorder
+        rstJobs![design code] = designcode
+        rstJobs![Date Created] = Date
+        rstJobs.Update
+        WriteJobsTraceLog ("AddJob " & worksorder & " : Added ")
+        Me.List3.AddItem ">>> Add new job=" & worksorder & " design/spec=" & designcode
+    End If
 End If
 
 rstJobs.Close

@@ -4,8 +4,10 @@ Host : 127.0.0.1
 Password : 
 UserName : root
 Port : 3306
-DispenserDatabasePath : Z:\_common\InkToJobs-5378\5378\5378_2007BE.mdb
+DispenserDatabasePath : C:\f\InkToJobs-5378\5378\5378_2007BE.mdb
 Default Print Process : Flexo
 Timer Counter Value : 3600
 Days To Look Back : 30
-DebugLevel : 1
+DebugLevel : 0
+note : Horrible: settings must be in the exact order above
+noteDebugLevel : 0=normal timed run 1=debug >1=normal no timer
