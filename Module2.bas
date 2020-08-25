@@ -49,18 +49,13 @@ MYODBCVERSION = strDriver
 Set g_MySQLConn = New ADODB.Connection
 
 'Build the DSN or DSN-Less part of the connect string
-
-'strConnectString = "Provider=MSDASQL;" & _
-'                    "Driver=" & MYODBCVERSION & ";" & _
-'                    "Server=" & MYSQL_HOST & ";" & _
-'                    "Database=" & MYSQL_DATABASE & ";" & _
-'                    "UID=" & MYSQL_USER_NAME & ";" & _
-'                    "PWD=" & MYSQL_PASSWORD & ";" & _
-'                    "Port=" & MYSQL_PORT
-
 'Cnn.Open Provider=SQLNCLI10;Server=10.1.100.1;Database=DataJualLama;Uid=sa;Pwd=sa;
+'mysql:
+'strConnectString = "Provider=MSDASQL;" & _
+'   strConnectString = "Provider=MSDASQL;" & _
+'ms-sql as follows, no provider
+'strConnectString = "Provider=SQLNCLI11;" & _
 
-                    
 strConnectString = "Provider=SQLNCLI11;" & _
                     "Server=" & MYSQL_HOST & ";" & _
                     "Database=" & MYSQL_DATABASE & ";" & _
@@ -75,12 +70,10 @@ strConnectStringDisplay = "Provider=SQLNCLI11;" & _
                     "UID=" & MYSQL_USER_NAME & ";" & _
                     "Port=" & MYSQL_PORT
 
-
 MainFrm![txtmysqlconnectionstring].Text = strConnectStringDisplay
 
-'g_MySQLConn.Open strConnectString, strLogin, strPassword
-g_MySQLConn.Open strConnectString, MYSQL_USER_NAME, MYSQL_PASSWORD
 
+g_MySQLConn.Open strConnectString, MYSQL_USER_NAME, MYSQL_PASSWORD
 'Check Conncetion State
 If g_MySQLConn.State <> adStateOpen Then
     EstablishMySQLConnection = False

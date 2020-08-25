@@ -1,14 +1,14 @@
 VERSION 5.00
 Begin VB.Form MainFrm 
    Caption         =   "Ink - Job/C3 synchronisation"
-   ClientHeight    =   9825
+   ClientHeight    =   9450
    ClientLeft      =   1035
    ClientTop       =   645
-   ClientWidth     =   13095
+   ClientWidth     =   12780
    Icon            =   "Form3.frx":0000
    LinkTopic       =   "Form3"
-   ScaleHeight     =   9825
-   ScaleWidth      =   13095
+   ScaleHeight     =   9450
+   ScaleWidth      =   12780
    WindowState     =   2  'Maximized
    Begin VB.CommandButton Command5 
       BackColor       =   &H00FFFF80&
@@ -25,7 +25,7 @@ Begin VB.Form MainFrm
       Height          =   375
       Left            =   0
       Style           =   1  'Graphical
-      TabIndex        =   13
+      TabIndex        =   12
       Top             =   9000
       Width           =   3615
    End
@@ -43,25 +43,16 @@ Begin VB.Form MainFrm
    Begin VB.TextBox Text1 
       Height          =   285
       Left            =   6120
-      TabIndex        =   11
+      TabIndex        =   10
       Top             =   1800
       Width           =   2175
-   End
-   Begin VB.CommandButton Command5_test 
-      Caption         =   "Test Button"
-      Height          =   495
-      Left            =   10200
-      TabIndex        =   10
-      Top             =   1560
-      Visible         =   0   'False
-      Width           =   1575
    End
    Begin VB.TextBox txtmysqlconnectionstring 
       Appearance      =   0  'Flat
       BackColor       =   &H8000000B&
       BorderStyle     =   0  'None
       Height          =   495
-      Left            =   4800
+      Left            =   4200
       MultiLine       =   -1  'True
       TabIndex        =   8
       Top             =   720
@@ -193,8 +184,8 @@ Begin VB.Form MainFrm
    End
    Begin VB.Label TextSql 
       Height          =   255
-      Left            =   4800
-      TabIndex        =   14
+      Left            =   4200
+      TabIndex        =   13
       Top             =   1320
       Width           =   7095
    End
@@ -202,12 +193,12 @@ Begin VB.Form MainFrm
       Caption         =   "Counter"
       Height          =   255
       Left            =   4920
-      TabIndex        =   12
+      TabIndex        =   11
       Top             =   1800
       Width           =   1095
    End
    Begin VB.Label Label8 
-      Caption         =   "Version C3 V3.00"
+      Caption         =   "Version C3 V3.00.1"
       Height          =   255
       Left            =   10680
       TabIndex        =   9
@@ -226,7 +217,7 @@ Begin VB.Form MainFrm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   255
-      Left            =   4920
+      Left            =   4200
       TabIndex        =   3
       Top             =   480
       Width           =   2895
@@ -269,7 +260,7 @@ End Sub
 
 
 Private Sub Command1_Click()
-
+' test DB connection
 Answer2 = False
 Me.txtmysqlconnectionstring.Text = ""
 
@@ -284,8 +275,10 @@ End Sub
 
 Private Sub Customers_Click()
 
-Dim MyView, MyNewView As String
+Dim MyView As String
+Dim MyNewView As String
 Dim CustCode As String
+Dim JCustCode As String
 Dim CustName As String
 Dim CustAddress As String
 Dim ValueStr As String
@@ -297,22 +290,27 @@ CustLog ("Customers_Click connect to DB " & MySQLDatabaseName)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 CustLog ("Customers_Click Connection answer = " & Answer)
 
+
 If Answer = True Then
     MyView = "CV_Ink_Customer"
-    HeaderStr = "Customer Code" & vbTab & "Customer Name" & vbTab & vbTab & "Customer Address"
+    HeaderStr = "C3_cust_code" & vbTab & "Job_cust_code" & vbTab & "Customer Name and Address"
     Me.List1.AddItem HeaderStr & "(from " & MyView & ")"
     
-    'rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-    MyNewView = "SELECT Cust_code, Name, ADDRESS1 from " & MyView
+    MyNewView = "SELECT Cust_code, JobSystem_Cust_Code, Name, ADDRESS1 from " & MyView
+    CustLog ("Customers_Click: " & MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-    CustLog ("Customers_Click : " & MyNewView)
-       
+    
     Me.Label1 = "Customers: "
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
         If Not IsNull(rst1![Cust_code]) Then
                 CustCode = rst1![Cust_code]
+                If Not IsNull(rst1![JobSystem_Cust_Code]) Then
+                    JCustCode = rst1![JobSystem_Cust_Code]
+                Else
+                    JCustCode = "NO JobSystem_Cust_Code"
+                End If
                 If Not IsNull(rst1![Name]) Then
                     CustName = rst1![Name]
                 Else
@@ -324,25 +322,26 @@ If Answer = True Then
                     CustAddress = "NO CUSTOMER ADDRESS"
                 End If
                 
-                CustLog ("Customers_Click UpdateCustomer - " & CustCode & "," & CustName & "," & CustAddress)
+                CustLog ("Customers_Click: " & CustCode & "," & JCustCode & "," & CustName & "," & CustAddress)
                 Me.Text1 = Counter & " " & CustName
-                Call UpdateCustomer(CustCode, CustName)
+                Call UpdateCustomer(CustCode, CustName, JCustCode)
         End If
 
-        ValueStr = CustCode & vbTab & vbTab & CustName & vbTab & vbTab & CustAddress
+        ValueStr = CustCode & vbTab & JCustCode & vbTab & CustName & vbTab & vbTab & CustAddress
         Me.List1.AddItem ValueStr
         rst1.MoveNext
     Loop
-
+    
     rst1.Close
     Call TerminateConnection
 End If
+
 
 End Sub
 
 
 Private Sub Command3_Click()
-
+' import spec
 Dim MyView As String
 Dim MyNewView As String
 Dim Spec As String
@@ -373,6 +372,7 @@ Dim LengthOfString As Integer
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 
 If Answer = True Then
+    ' get print list
     MyNewView = "SELECT DISTINCT Printer from CV_Ink_Articles"
     WriteDesignTraceLog (MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
@@ -382,7 +382,6 @@ If Answer = True Then
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
-        
         If Not IsNull(rst1![Printer]) Then
             Printer = rst1![Printer]
         Else
@@ -390,7 +389,7 @@ If Answer = True Then
         End If
         
         Me.List2.AddItem "Checking Printer " & Printer
-        WriteDesignTraceLog ("Calling AddPress " & Printer)
+        'WriteDesignTraceLog ("Calling AddPress " & Printer)
         Call AddPress(Printer, Printer)
         
         rst1.MoveNext
@@ -400,6 +399,9 @@ If Answer = True Then
 End If
 
 Call AddCustomers
+Call AddInkTypes
+Call AddSubstrates
+Call AddDesigns
 
 End Sub
 
@@ -461,7 +463,7 @@ If Answer = True Then
     Call TerminateConnection
 End If
 
-Call AddInkTypes
+
 
 End Sub
 Private Sub AddInkTypes()
@@ -521,9 +523,7 @@ If Answer = True Then
 
     Call TerminateConnection
 End If
-
-Call AddSubstrates
-
+'Call AddSubstrates
 End Sub
 
 Private Sub AddSubstrates()
@@ -554,15 +554,14 @@ Dim Counter As Integer
 
 
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
 If Answer = True Then
-    'MyView = "`CV_Ink_Articles`"
-    MyNewView = "SELECT DISTINCT Substrate FROM CV_Ink_Articles"
-    rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
-       
     Me.List2.AddItem "AddSubstrates: Substrate FROM CV_Ink_Articles "
-            
     Me.Label1 = "Substrates:"
+    
+    MyNewView = "SELECT DISTINCT Substrate FROM CV_Ink_Articles"
+    WriteDesignTraceLog (MyNewView)
+    rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    
     Do Until rst1.EOF
         Counter = Counter + 1
         Me.Text1 = Counter
@@ -585,7 +584,7 @@ If Answer = True Then
 End If
 
 'MsgBox "DONE"
-Call AddDesigns
+'Call AddDesigns
 
 End Sub
 
@@ -616,18 +615,15 @@ Dim Counter As Integer
 Dim LengthOfString As Integer
 
 
-'Answer = EstablishMySQLConnection(Me.txtUsername.Text, Me.txtPassword.Text, Me.txtHost.Text, Me.txtDatabaseName.Text, Me.txtPort.Text, Me.TxtDriver.Text)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
 If Answer = True Then
     'HeaderStr = "Spec" & " | " & "Customer Code" & " | " & "Design"
     HeaderStr = "Spec" & vbTab & vbTab & "Customer Code" & vbTab & vbTab & "Design"
     Me.List2.AddItem HeaderStr
     Me.List2.AddItem ""
     
-    'MyView = "`CV_Ink_Articles`"
-    'MyView = "SELECT Spec, Cust_code, Design, Substrate, PrRepeat, PrWidth,InkType  from CV_Ink_Articles"
     MyView = "SELECT * from CV_Ink_Articles"
+    WriteDesignTraceLog ("AddDesigns: " & MyView)
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
     'Me.List2.AddItem "AddDesigns "
       
@@ -636,7 +632,6 @@ If Answer = True Then
         Counter = Counter + 1
         Me.Text1 = Counter
         DoEvents
-    
         'MsgBox "Counter = " & Counter
         
         If Not IsNull(rst1![Spec]) Then
@@ -706,14 +701,12 @@ If Answer = True Then
                 LastChange = "NO lastchange"
             End If
             
-
             If Not IsNumeric(PrWidth) Then
-            PrWidth = 0
+              PrWidth = 0
             End If
             If Not IsNumeric(PrRepeat) Then
-            PrRepeat = 0
+              PrRepeat = 0
             End If
-
             
             WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))  ' & "," & Printer & "," & LastChange))
             
@@ -740,7 +733,7 @@ End Sub
 
 
 Private Sub Command4_Click()
-
+' import jobs
 Dim MyView As String
 Dim job As String
 Dim Spec As String
@@ -752,17 +745,14 @@ Dim HeaderStr As String
 Dim Counter As Integer
 
 
-WriteJobsTraceLog ("Command4_Click Attempting to connect - CV_Ink_PO")
+WriteJobsTraceLog ("Command4_Click connect DB")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-'WriteJobsTraceLog ("Connection = " & Answer)
+WriteJobsTraceLog ("Connection = " & Answer)
 
 If Answer = True Then
-    'WriteJobsTraceLog ("Connection = " & Answer)
-    
     HeaderStr = "Job" & vbTab & vbTab & "Spec" & vbTab & vbTab & "Del Date" & vbTab & vbTab & "Customer Code" & vbTab & "Design"
     Me.List3.AddItem HeaderStr
-    'MyView = "`CV_Ink_PO`"
-    MyView = "`select job, Spec, Date, Cust_code, Design  from CV_Ink_PO"
+    MyView = "select job, Spec, Date, Cust_code, Design  from CV_Ink_PO"
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
       
     Me.Label1 = "Jobs:"
@@ -832,12 +822,12 @@ Call AddCustomer("NO CUSTOMER CODE", "NO CUSTOMER CODE")
 End Sub
 
 Function CustLog(TraceText As String)
-
   'Me.List1.AddItem "Error see log for details"
   ' ListFile = App.Path & "\" & "setups.txt"
   Dim logd, logdir, lfile As String
   Const ForReading = 1, ForWriting = 2, ForAppending = 8
   Dim fso, f
+  
   Set fso = CreateObject("Scripting.FileSystemObject")
   logd = App.Path & "\Logs"
   logdir = logd & "\" & "custlog"
@@ -898,6 +888,7 @@ Function WriteJobsTraceLog(TraceText As String)
 End Function
 
 Private Sub Command5_Click()
+' export costings
 Dim db As Database
 Dim rst As DAO.Recordset
 Dim WorksOrderNumberI As String
@@ -1075,30 +1066,48 @@ Function WriteExportTraceLog(TraceText As String)
 
 End Function
 
-Function UpdateCustomer(CustomerCode As String, CustomerName As String)
+Function UpdateCustomer(CustomerCode As String, CustomerName As String, JCustCode As String)
 Dim db As Database
 Dim rstCust As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 
+Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 If rstCust.RecordCount = 0 Then
+    ' Add new customer name, code
     rstCust.AddNew
     rstCust![Customer Code] = CustomerCode
     rstCust![customer name] = CustomerName
     rstCust.Update
-    
-    CustLog ("UpdateCustomer " & CustomerCode & " added ")
+    CustLog ("UpdateCustomer: code " & CustomerCode & " added - " & CustomerName)
 Else
+    ' Update customer name, given code
     rstCust.Edit
     rstCust![customer name] = CustomerName
     rstCust.Update
     If DebugLevel = 1 Then
-      CustLog ("UpdateCustomer " & CustomerCode & " customer name updated")
+      CustLog ("UpdateCustomer: " & CustomerCode & " customer name updated")
     End If
 End If
-
 rstCust.Close
+
+' deprecated: in fact dont need to do this, just leave old customers in the DB
+' further down references will have to be updated though.
+'If Not IsNull(JCustCode) Then
+'  Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & JCustCode & "'")
+'  If rstCust.RecordCount <> 0 Then
+'    ' Convert code from JobSystem to C3
+'    If DebugLevel = 1 Then
+'      CustLog ("UpdateCustomer: Change code from JobSystem: " & "SELECT * FROM Customers WHERE [Customer code] = '" & JCustCode & "'")
+'    End If
+'    rstCust.Edit
+'    rstCust![Customer Code] = CustomerCode
+'    rstCust![customer name] = CustomerName
+'    rstCust.Update
+'  End If
+'  rstCust.Close
+'End If
+
 db.Close
 
 End Function
@@ -1139,12 +1148,16 @@ db.Close
 End Function
 Function AddPress(PressCode As String, PressName As String)
 Dim db As Database
+Dim qu As String
 Dim rstPress As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
-Set rstPress = db.OpenRecordset("SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'")
+qu = "SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'"
+WriteDesignTraceLog (qu)
+Set rstPress = db.OpenRecordset(qu)
 
 If rstPress.RecordCount = 0 Then
+    WriteDesignTraceLog ("AddPress: " & PressCode & ", " & PressName)
     rstPress.AddNew
     rstPress![Press Number] = PressCode
     rstPress![Press name] = PressName
@@ -1160,13 +1173,16 @@ Function UpdateDesign(designcode As String, designname As String, Customer As St
 
 Dim db As Database
 Dim rstDesign As DAO.Recordset
+Dim q As String
 
 Set db = OpenDatabase(AccessDBPath)
 designname = Replace(designname, "'", "`")
 designname = Left(designname, 50)
 Substrate = Replace(Substrate, "'", " ")
-Set rstDesign = db.OpenRecordset("SELECT * FROM [Designs] WHERE [Design code] = '" & designcode & "'")
 
+q = "SELECT * FROM [Designs] WHERE [Design code] = '" & designcode & "'"
+WriteDesignTraceLog (q)
+Set rstDesign = db.OpenRecordset(q)
 If rstDesign.RecordCount <> 0 Then
     WriteDesignTraceLog ("UpdateDesign " & designcode)
     
@@ -1229,6 +1245,7 @@ rstDesign.Close
 db.Close
 
 End Function
+
 Function UpdateSubstrate(SubstrateCode As String)
 
 Dim db As Database
@@ -1241,7 +1258,7 @@ Set rstSubs = db.OpenRecordset("SELECT * FROM [Substrates] WHERE [Substrate code
 If rstSubs.RecordCount <> 0 Then
     'MsgBox "Substrate Exists"
 Else
-    'MsgBox "Substrate Does Not Exist"
+    WriteDesignTraceLog ("Substrate added " & SubstrateCode)
     rstSubs.AddNew
     rstSubs![substrate code] = SubstrateCode
     rstSubs![substrate name] = SubstrateCode
@@ -1251,8 +1268,6 @@ End If
 
 rstSubs.Close
 db.Close
-
-
 End Function
 
 Function AddJob(worksorder As String, designcode As String)
