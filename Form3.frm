@@ -1,18 +1,18 @@
 VERSION 5.00
 Begin VB.Form MainFrm 
    Caption         =   "Ink - Job/C3 synchronisation"
-   ClientHeight    =   9450
+   ClientHeight    =   8925
    ClientLeft      =   1035
    ClientTop       =   645
-   ClientWidth     =   12780
+   ClientWidth     =   12570
    Icon            =   "Form3.frx":0000
    LinkTopic       =   "Form3"
-   ScaleHeight     =   9450
-   ScaleWidth      =   12780
+   ScaleHeight     =   8925
+   ScaleWidth      =   12570
    WindowState     =   2  'Maximized
-   Begin VB.CommandButton Command5 
+   Begin VB.CommandButton bbMigrateSpecs 
       BackColor       =   &H00FFFF80&
-      Caption         =   "5. Export Costings"
+      Caption         =   "Manually first: migrate custs/specs"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -23,11 +23,11 @@ Begin VB.Form MainFrm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   375
-      Left            =   0
+      Left            =   8280
       Style           =   1  'Graphical
       TabIndex        =   12
-      Top             =   9000
-      Width           =   3615
+      Top             =   6480
+      Width           =   3975
    End
    Begin VB.Timer Timer2 
       Interval        =   5000
@@ -75,7 +75,7 @@ Begin VB.Form MainFrm
       Style           =   1  'Graphical
       TabIndex        =   7
       Top             =   6480
-      Width           =   3615
+      Width           =   2895
    End
    Begin VB.ListBox List3 
       BeginProperty Font 
@@ -111,7 +111,7 @@ Begin VB.Form MainFrm
    End
    Begin VB.CommandButton Command3 
       BackColor       =   &H00FFFF80&
-      Caption         =   "3. Import Spec/designs"
+      Caption         =   "3. Import printers/customers/ink types/designs"
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -126,7 +126,7 @@ Begin VB.Form MainFrm
       Style           =   1  'Graphical
       TabIndex        =   4
       Top             =   3600
-      Width           =   3615
+      Width           =   5295
    End
    Begin VB.CommandButton Command1 
       BackColor       =   &H8000000A&
@@ -198,12 +198,12 @@ Begin VB.Form MainFrm
       Width           =   1095
    End
    Begin VB.Label Label8 
-      Caption         =   "Version C3 V3.00.1"
+      Caption         =   "Version C3/ 2020.09.21-02"
       Height          =   255
-      Left            =   10680
+      Left            =   9840
       TabIndex        =   9
       Top             =   0
-      Width           =   1695
+      Width           =   2535
    End
    Begin VB.Label Label3 
       Caption         =   "C3 SQL database:"
@@ -258,6 +258,182 @@ Public Sub TerminateConnection()
     Set g_MySQLError = Nothing
 End Sub
 
+
+Private Sub bbMigrateSpecs_Click()
+' migrate old job customer codes to new C3 codes
+Dim Query As String
+Dim db, db2 As Database
+Dim rstCust, rst2 As DAO.Recordset
+Dim Counter As Integer
+
+Set db = OpenDatabase(AccessDBPath)
+Set db2 = OpenDatabase(AccessDBPath)
+Me.List3.Clear
+
+' 1. add C3 customers
+Me.List3.AddItem "-- 1. add C3 customers"
+Call Customers_Click
+
+Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
+If Answer = True Then
+
+    ' get all customers with Job and C3 code
+    Me.Label1 = "Customer code migration: "
+    Me.List3.AddItem Me.Label1
+    Query = "SELECT Cust_code, JobSystem_Cust_Code from CV_Ink_Customer"
+    CustLog ("------ bbMigrate: " & Query)
+    Me.List3.AddItem "-- 2. cust-code on designs"
+    rst1.Open Query, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    Counter = 0
+    Do Until rst1.EOF
+        Counter = Counter + 1
+        Me.Text1 = Counter
+        DoEvents
+        
+        If Not IsNull(rst1![Cust_code]) Then
+            If Not IsNull(rst1![JobSystem_Cust_Code]) Then
+                Set rstCust = db.OpenRecordset("SELECT * FROM designs WHERE [Customer] = '" & rst1![JobSystem_Cust_Code] & "'")
+                Do Until rstCust.EOF
+                    ' Update customer code
+                    Me.List3.AddItem "Update job cust " & rst1![JobSystem_Cust_Code]
+                    If Not IsNull(rstCust![Customer]) Then
+                      Me.List3.AddItem "Update design " & rstCust![Design Code] & " for customer code: " & rst1![JobSystem_Cust_Code] & " changed to " & rst1![Cust_code]
+                      rstCust.Edit
+                      rstCust![Customer] = rst1![Cust_code]
+                      rstCust.Update
+                      If DebugLevel = 1 Then
+                        CustLog ("bbMigrate, Update design " & rstCust![Design Code] & " for customer code: " & rst1![JobSystem_Cust_Code] & " channged to " & rst1![Cust_code])
+                      End If
+                    End If
+                    rstCust.MoveNext
+                Loop
+                rstCust.Close
+                
+            End If
+        End If
+        rst1.MoveNext
+    Loop
+    CustLog ("------ bbMigrate: cust done")
+    rst1.Close
+    
+    
+    ' Fix live DB: once off
+    '           Me.List3.AddItem "--- Prepare to find entries added on 20th sept:"
+    '           CustLog ("--- HACK: Prepare to find entries added on 20th sept")
+                ' '20/09/2020' and [Date Amended]< '20/09/2020'
+                ' WHERE [Date Created] = #2020/09/20#
+                ' [Design Code],[Date Created],[Date Amended]
+                'Set rstCust = db.OpenRecordset("SELECT top 10 * FROM [Designs] WHERE [Date Created] = #20/09/2020# ")
+                'Set rstCust = db.OpenRecordset("SELECT top 10 * FROM [Designs] WHERE [Date Created] < #20/09/2020# ")
+     '           Set rstCust = db.OpenRecordset("SELECT FROM [Designs] d WHERE d.[Design Code] like 'A*' and  [Date Created] = #20/09/2020# and [Date Amended]< #20/09/2020#")
+     '           Do Until rstCust.EOF
+     '               If Not IsNull(rstCust![Design Code]) Then
+      '                Me.List3.AddItem "code: " & rstCust![Design Code]
+                      ' & Format(rst1![Date Created], "yyyy/mm/dd")
+                      'Me.List3.AddItem "code: " & rstCust![Design Code] & " Created " & rst1![Date Created] & ", amended " & rst1![Date Amended]
+                      ' delete the record
+                      'rstCust.Edit
+                      'rstCust.Update
+      '                rstCust.Delete
+      '              End If
+      '              rstCust.MoveNext
+      '          Loop
+    '          rstCust.Close
+    
+    Me.Label1 = "Spec nr migration: "
+    Me.List3.AddItem "-- 3. get list of specs"
+    WriteDesignTraceLog ("-- 3. get list of specs")
+    Query = "SELECT SPEC,OldJobSpec,DesignImage from CV_Ink_Articles WHERE OldJobSpec IS NOT null AND SPEC IS NOT null"
+    WriteDesignTraceLog ("------ bbMigrate: " & Query)
+    Counter = 0
+    rst1.Open Query, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    Do Until rst1.EOF
+        Counter = Counter + 1
+        Me.Text1 = Counter
+        DoEvents
+            
+        ' does a design exist with C3 code=Spec already? If yes, skip
+        'WriteDesignTraceLog ("SELECT Spec FROM [Design Code] WHERE [Design Code] = '" & rst1![Spec] & "'")
+        Set rst2 = db2.OpenRecordset("SELECT [Design Code] FROM [Designs] WHERE [Design Code] = '" & rst1![Spec] & "'")
+        If rst2.RecordCount < 1 Then
+            ' find designs to rename
+            Me.List3.AddItem "-- 4. Find [Designs] with OldJobSpec " & rst1![OldJobSpec]
+            WriteDesignTraceLog ("-- 4. Find [Designs] with OldJobSpec " & rst1![OldJobSpec])
+            Set rstCust = db.OpenRecordset("SELECT * FROM [Designs] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+            Do Until rstCust.EOF
+                If Not IsNull(rstCust![Design Code]) Then
+                  
+                    If DebugLevel = 1 Then
+                      WriteDesignTraceLog ("bbMigrate, [Designs] code jobsys: " & rst1![OldJobSpec] & " changed to " & rst1![Spec])
+                    End If
+                    Me.List3.AddItem "[Designs] OldJobSpec: " & rst1![OldJobSpec] & " change to " & rst1![Spec] & ", image=" & rst1![DesignImage]
+                    
+                    rstCust.Edit
+                    rstCust![Design Code] = rst1![Spec]
+                    If Not IsNull(rst1![DesignImage]) Then
+                      rstCust![Image Path] = rst1![DesignImage]
+                    Else
+                      rstCust![Image Path] = "NO DesignImage"
+                    End If
+                    rstCust.Update
+                     
+                End If
+                rstCust.MoveNext
+            Loop
+            rstCust.Close
+          
+        Else
+            WriteDesignTraceLog ("-- 4. Skip existing [Designs] " & rst1![Spec])
+        End If
+        
+
+        Me.List3.AddItem "-- 5. Update [Design Details].."
+        WriteDesignTraceLog ("-- 5. Update [Design Details]..")
+        Set rstCust = db.OpenRecordset("SELECT * FROM [Design Details] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+        Do Until rstCust.EOF
+            ' Update code
+            If Not IsNull(rstCust![Design Code]) Then
+              If DebugLevel = 1 Then
+                WriteDesignTraceLog ("bbMigrate, [Design Details] code (jobsys): " & rst1![OldJobSpec] & " changed to " & rst1![Spec])
+              End If
+              Me.List3.AddItem "[Design Details] code (jobsys): " & rst1![OldJobSpec] & " change to " & rst1![Spec]
+              rstCust.Edit
+              rstCust![Design Code] = rst1![Spec]
+              rstCust.Update
+            End If
+            rstCust.MoveNext
+        Loop
+        rstCust.Close
+            
+        Me.List3.AddItem "-- 6. Update [Works Orders].."
+        WriteDesignTraceLog ("-- 6. Update [Works Orders]..")
+        Set rstCust = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+        Do Until rstCust.EOF
+            ' Update spec code
+            If Not IsNull(rstCust![Design Code]) Then
+              Me.List3.AddItem "[Works Orders] code (jobsys): " & rst1![OldJobSpec] & " change to " & rst1![Spec]
+              If DebugLevel = 1 Then
+                WriteDesignTraceLog ("bbMigrate, [Works Orders] code (jobsys): " & rst1![OldJobSpec] & " changed to " & rst1![Spec])
+              End If
+              rstCust.Edit
+              rstCust![Design Code] = rst1![Spec]
+              rstCust.Update
+            End If
+            rstCust.MoveNext
+        Loop
+        rstCust.Close
+
+        rst1.MoveNext
+    Loop
+        
+    
+    WriteDesignTraceLog ("------ bbMigrate: done ")
+    Me.List3.AddItem "---- done"
+    rst1.Close
+    
+    Call TerminateConnection
+End If
+End Sub
 
 Private Sub Command1_Click()
 ' test DB connection
@@ -367,14 +543,11 @@ Dim LastChange24 As String
 Dim Counter As Integer
 Dim LengthOfString As Integer
 
-
-'Answer = EstablishMySQLConnection(Me.txtUsername.Text, Me.txtPassword.Text, Me.txtHost.Text, Me.txtDatabaseName.Text, Me.txtPort.Text, Me.TxtDriver.Text)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
-
+' get printer list, add presses if needed
 If Answer = True Then
-    ' get print list
     MyNewView = "SELECT DISTINCT Printer from CV_Ink_Articles"
-    WriteDesignTraceLog (MyNewView)
+    WriteDesignTraceLog ("------ Command3_Click: " & MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
     Me.List2.AddItem "CONNECTED"
       
@@ -389,19 +562,20 @@ If Answer = True Then
         End If
         
         Me.List2.AddItem "Checking Printer " & Printer
-        'WriteDesignTraceLog ("Calling AddPress " & Printer)
+        WriteDesignTraceLog ("Calling AddPress " & Printer)
         Call AddPress(Printer, Printer)
-        
         rst1.MoveNext
     Loop
-    'WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))
     Call TerminateConnection
+    'WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))
 End If
 
 Call AddCustomers
 Call AddInkTypes
 Call AddSubstrates
 Call AddDesigns
+WriteDesignTraceLog ("------ Command3_Click: done ")
+Call TerminateConnection
 
 End Sub
 
@@ -438,7 +612,7 @@ Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQL
 If Answer = True Then
     'MyView = "`CV_Ink_Articles`"
     MyNewView = "SELECT DISTINCT cust_code from CV_Ink_Articles"
-
+    WriteDesignTraceLog ("------ AddCustomers: " & MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
     Me.List2.AddItem "AddCustomers"
     
@@ -448,14 +622,16 @@ If Answer = True Then
         Me.Text1 = Counter
         DoEvents
         
-        If Not IsNull(rst1![Cust_code]) Then
+        If rst1![Cust_code] = "" Then
+            CustCode = "NO CUSTOMER CODE"
+        ElseIf Not IsNull(rst1![Cust_code]) Then
             CustCode = rst1![Cust_code]
         Else
             CustCode = "NO CUSTOMER CODE"
         End If
 
         Me.List2.AddItem "Checking Customer: " & CustCode
-        WriteDesignTraceLog ("Calling AddCustomer " & CustCode)
+        'WriteDesignTraceLog ("Calling AddCustomer " & CustCode)
         Call AddCustomer(CustCode, CustCode)
         
         rst1.MoveNext
@@ -498,8 +674,8 @@ Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQL
 
 If Answer = True Then
     Me.List2.AddItem "AddInkTypes from CV_Ink_Articles"
-    'MyView = "`CV_Ink_Articles`"
     MyNewView = "SELECT DISTINCT inktype from CV_Ink_Articles"
+    WriteDesignTraceLog ("------ AddInkTypes: " & MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
       
     Me.Label1 = "inktypes:"
@@ -515,7 +691,7 @@ If Answer = True Then
         End If
 
         Me.List2.AddItem "Checking InkType " & InkCode
-        'WriteDesignTraceLog ("Calling AddInkType " & InkCode)
+        WriteDesignTraceLog ("Calling AddInkType " & InkCode)
         Call AddInkType(InkCode)
         
         rst1.MoveNext
@@ -526,7 +702,7 @@ End If
 'Call AddSubstrates
 End Sub
 
-Private Sub AddSubstrates()
+Public Function AddSubstrates() As String
 
 Dim MyView As String
 Dim MyNewView As String
@@ -559,7 +735,7 @@ If Answer = True Then
     Me.Label1 = "Substrates:"
     
     MyNewView = "SELECT DISTINCT Substrate FROM CV_Ink_Articles"
-    WriteDesignTraceLog (MyNewView)
+    WriteDesignTraceLog ("------ AddSubstrates: " & MyNewView)
     rst1.Open MyNewView, g_MySQLConn, adOpenDynamic, adLockOptimistic
     
     Do Until rst1.EOF
@@ -573,9 +749,9 @@ If Answer = True Then
             Substrate = "NO SUBSTATE CODE"
         End If
 
-        Me.List2.AddItem "Checking Substrate " & Substrate
-        WriteDesignTraceLog ("Calling UpdateSubstrate " & Substrate)
-        Call UpdateSubstrate(Substrate)
+        Me.List2.AddItem "Checking Substrate: " & Substrate
+        WriteDesignTraceLog ("Calling UpdateSubstrate <" & Substrate & ">")
+        Substrate = UpdateSubstrate(Substrate)
         
         rst1.MoveNext
     Loop
@@ -586,7 +762,7 @@ End If
 'MsgBox "DONE"
 'Call AddDesigns
 
-End Sub
+End Function
 
 Private Sub AddDesigns()
 
@@ -623,7 +799,7 @@ If Answer = True Then
     Me.List2.AddItem ""
     
     MyView = "SELECT * from CV_Ink_Articles"
-    WriteDesignTraceLog ("AddDesigns: " & MyView)
+    WriteDesignTraceLog ("------ AddDesigns: " & MyView)
     rst1.Open MyView, g_MySQLConn, adOpenDynamic, adLockOptimistic
     'Me.List2.AddItem "AddDesigns "
       
@@ -636,11 +812,21 @@ If Answer = True Then
         
         If Not IsNull(rst1![Spec]) Then
             Spec = rst1![Spec]
-            If Not IsNull(rst1![Cust_code]) Then
+            
+            If rst1![Cust_code] = "" Then
+                CustCode = "NO CUSTOMER CODE"
+            ElseIf Not IsNull(rst1![Cust_code]) Then
                 CustCode = rst1![Cust_code]
             Else
                 CustCode = "NO CUSTOMER CODE"
             End If
+        
+            'If Not IsNull(rst1![Cust_code]) Then
+            '   CustCode = rst1![Cust_code]
+            'Else
+            '   CustCode = "NO CUSTOMER CODE"
+            'End If
+            
             If Not IsNull(rst1![Design]) Then
                 Design = rst1![Design]
             Else
@@ -649,7 +835,7 @@ If Answer = True Then
             If Not IsNull(rst1![Substrate]) Then
                 Substrate = rst1![Substrate]
             Else
-                Substrate = "NO SUBSTRATE"
+                Substrate = "no SUBSTRATE"
             End If
             If Not IsNull(rst1![PrRepeat]) Then
                 PrRepeat = rst1![PrRepeat]
@@ -710,10 +896,11 @@ If Answer = True Then
             
             WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))  ' & "," & Printer & "," & LastChange))
             
-            'Call AddPress(Printer, Printer)
-            'Call AddCustomer(CustCode, CustCode)
-            'Call UpdateSubstrate(Substrate)
-            WriteDesignTraceLog "Calling UpdateDesign"
+            Call AddPress(Printer, Printer)
+            Call AddCustomer(CustCode, CustCode)
+            Substrate = UpdateSubstrate(Substrate)
+            WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))  ' & "," & Printer & "," & LastChange))
+            'WriteDesignTraceLog "Calling UpdateDesign,"
             Call UpdateDesign(Spec, Design, CustCode, Substrate, Printer, CSng(PrWidth), CSng(PrRepeat), CDate(LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear), LastChange24, MyComment, DesignImage, InkType)
 
         End If
@@ -726,6 +913,7 @@ If Answer = True Then
     Loop
 
     rst1.Close
+    WriteDesignTraceLog ("------ AddDesigns: done ")
     Call TerminateConnection
 End If
 
@@ -745,7 +933,7 @@ Dim HeaderStr As String
 Dim Counter As Integer
 
 
-WriteJobsTraceLog ("Command4_Click connect DB")
+WriteJobsTraceLog ("------ Command4_Click connect DB")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 WriteJobsTraceLog ("Connection = " & Answer)
 
@@ -789,8 +977,9 @@ If Answer = True Then
     Loop
 
     rst1.Close
-    Call TerminateConnection
 End If
+WriteJobsTraceLog ("------ Command4_Click done")
+Call TerminateConnection
 
 
 End Sub
@@ -862,7 +1051,7 @@ Function WriteDesignTraceLog(TraceText As String)
   End If
   
   Set f = fso.OpenTextFile("Logs\DesignTraceLog " & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt", ForAppending, False)
-  f.WriteLine Now & "," & TraceText
+  f.WriteLine Now & " " & TraceText
   f.Close
 
 End Function
@@ -880,7 +1069,7 @@ Function WriteJobsTraceLog(TraceText As String)
   End If
   
   Set f = fso.OpenTextFile("Logs\JobsTraceLog " & Day(Now) & " - " & Month(Now) & " - " & Year(Now) & ".txt", ForAppending, False)
-  f.WriteLine Now & "," & TraceText
+  f.WriteLine Now & " " & TraceText
   'f.WriteLine TraceText
   
   f.Close
@@ -933,7 +1122,7 @@ Do Until rst.EOF
     Me.Text1 = "INSERT " & Counter
 
     WorksOrderNumberI = rst![works order number]
-    DesignCodeI = rst![design code]
+    DesignCodeI = rst![Design Code]
     If Not IsNull(rst![design name]) Then
         DesignNameI = rst![design name]
     Else
@@ -1151,11 +1340,10 @@ Dim db As Database
 Dim qu As String
 Dim rstPress As DAO.Recordset
 
+WriteDesignTraceLog ("AccessDB: SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'")
 Set db = OpenDatabase(AccessDBPath)
-qu = "SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'"
-WriteDesignTraceLog (qu)
-Set rstPress = db.OpenRecordset(qu)
 
+Set rstPress = db.OpenRecordset("SELECT * FROM Presses WHERE [Press Number] = '" & PressCode & "'")
 If rstPress.RecordCount = 0 Then
     WriteDesignTraceLog ("AddPress: " & PressCode & ", " & PressName)
     rstPress.AddNew
@@ -1163,11 +1351,11 @@ If rstPress.RecordCount = 0 Then
     rstPress![Press name] = PressName
     rstPress.Update
 End If
-
 rstPress.Close
 db.Close
 
 End Function
+
 
 Function UpdateDesign(designcode As String, designname As String, Customer As String, Substrate As String, Press As String, width As Single, ImpressionLength As Single, DateAmended As String, TimeAmended As String, Comments As String, ImagePath As String, MyInkType As String)
 
@@ -1178,13 +1366,24 @@ Dim q As String
 Set db = OpenDatabase(AccessDBPath)
 designname = Replace(designname, "'", "`")
 designname = Left(designname, 50)
+
+designcode = Replace(designcode, "'", "`")
+designcode = Left(designcode, 18)
+
 Substrate = Replace(Substrate, "'", " ")
+If IsNull(Substrate) Then
+  Substrate = "NO SUBSTATE CODE"
+ElseIf Substrate = "" Then
+  Substrate = "NO SUBSTATE CODE"
+End If
+
+WriteDesignTraceLog ("UpdateDesign: " & designcode & ", substrate=" & Substrate)
 
 q = "SELECT * FROM [Designs] WHERE [Design code] = '" & designcode & "'"
 WriteDesignTraceLog (q)
 Set rstDesign = db.OpenRecordset(q)
 If rstDesign.RecordCount <> 0 Then
-    WriteDesignTraceLog ("UpdateDesign " & designcode)
+    WriteDesignTraceLog ("UpdateDesign: Edit " & designcode)
     
     rstDesign.Edit
     If designname <> "" Then
@@ -1205,21 +1404,22 @@ If rstDesign.RecordCount <> 0 Then
     rstDesign![Print Process] = PrintProcess
     rstDesign![Comments] = Comments
     rstDesign![Image Path] = ImagePath
-    rstDesign.Update
     
     If DebugLevel = 1 Then
-        WriteDesignTraceLog ("UpdateDesign/spec " & designcode & " Updated")
+        WriteDesignTraceLog ("UpdateDesign/spec " & designcode & " - saving")
     End If
-Else
-    WriteDesignTraceLog ("UpdateDesign/spec New Spec: " & designcode)
+    rstDesign.Update
     
+Else
+    WriteDesignTraceLog ("UpdateDesign/spec AddNew: " & designcode)
     rstDesign.AddNew
-    rstDesign![design code] = designcode
+    rstDesign![Design Code] = designcode
     If designname <> "" Then
         rstDesign![design name] = designname
     Else
         rstDesign![design name] = "NO DESIGN NAME"
     End If
+    
     rstDesign![Customer] = Customer
     rstDesign![Substrate] = Substrate
     rstDesign![Printing Press] = Press
@@ -1234,6 +1434,7 @@ Else
     rstDesign![Print Process] = PrintProcess
     rstDesign![Comments] = Comments
     rstDesign![Image Path] = ImagePath
+    WriteDesignTraceLog ("UpdateDesign/spec New Spec: update")
     rstDesign.Update
     
     If DebugLevel = 1 Then
@@ -1252,17 +1453,22 @@ Dim db As Database
 Dim rstSubs As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
+' limit size, remove special chars
+SubstrateCode = Left(SubstrateCode, 40)
 SubstrateCode = Replace(SubstrateCode, "'", " ")
+If IsNull(SubstrateCode) Then
+  SubstrateCode = "NO SUBSTATE CODE"
+ElseIf SubstrateCode = "" Then
+  SubstrateCode = "NO SUBSTATE CODE"
+End If
 Set rstSubs = db.OpenRecordset("SELECT * FROM [Substrates] WHERE [Substrate code] = '" & SubstrateCode & "'")
-
 If rstSubs.RecordCount <> 0 Then
-    'MsgBox "Substrate Exists"
+    WriteDesignTraceLog ("Substrate added: " & SubstrateCode)
 Else
-    WriteDesignTraceLog ("Substrate added " & SubstrateCode)
+    WriteDesignTraceLog ("Substrate added: " & SubstrateCode)
     rstSubs.AddNew
     rstSubs![substrate code] = SubstrateCode
     rstSubs![substrate name] = SubstrateCode
-    
     rstSubs.Update
 End If
 
@@ -1277,24 +1483,23 @@ Dim rstJobs As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
 Set rstJobs = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Works Order Number] = '" & worksorder & "'")
+WriteJobsTraceLog ("AddJob: " & "SELECT * FROM [Works Orders] WHERE [Works Order Number] = '" & worksorder & "'")
 
 If rstJobs.RecordCount <> 0 Then
     If DebugLevel = 1 Then
         WriteJobsTraceLog ("AddJob " & worksorder & " Already exists on the ink system")
     End If
 Else
+    WriteJobsTraceLog ("AddJob: adding new " & worksorder)
     rstJobs.AddNew
     rstJobs![works order number] = worksorder
-    rstJobs![design code] = designcode
+    rstJobs![Design Code] = designcode
     rstJobs![Date Created] = Date
     rstJobs.Update
-    
-    WriteJobsTraceLog ("AddJob " & worksorder & " Added ")
 End If
 
 rstJobs.Close
 db.Close
-
 
 End Function
 
@@ -1423,12 +1628,13 @@ End Sub
 
 Private Sub Timer2_Timer()
     Timer2.Enabled = False
-    Me.List1.Clear
-    Me.List2.Clear
-    Me.List3.Clear
     
     ' DEV: comment the following to disable automated execution
     If DebugLevel = 0 Then
+        Me.List1.Clear
+        Me.List2.Clear
+        Me.List3.Clear
+        
         Call Customers_Click
         Call Command3_Click
         Call Command4_Click
