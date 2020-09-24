@@ -900,9 +900,9 @@ If Answer = True Then
             Call AddPress(Printer, Printer)
             Call AddCustomer(CustCode, CustCode)
             Substrate = UpdateSubstrate(Substrate)
-            WriteDesignTraceLog ("Substrate now=" & Substrate)
+            'WriteDesignTraceLog ("Substrate now=" & Substrate)
             WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))  ' & "," & Printer & "," & LastChange))
-            WriteDesignTraceLog "Calling UpdateDesign,"
+            'WriteDesignTraceLog "Calling UpdateDesign,"
             Call UpdateDesign(Spec, Design, CustCode, Substrate, Printer, CSng(PrWidth), CSng(PrRepeat), CDate(LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear), LastChange24, MyComment, DesignImage, InkType)
 
         End If
