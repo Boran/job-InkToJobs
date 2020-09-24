@@ -42,9 +42,9 @@ Begin VB.Form MainFrm
    End
    Begin VB.TextBox Text1 
       Height          =   285
-      Left            =   6120
+      Left            =   10320
       TabIndex        =   10
-      Top             =   1800
+      Top             =   1920
       Width           =   2175
    End
    Begin VB.TextBox txtmysqlconnectionstring 
@@ -75,7 +75,7 @@ Begin VB.Form MainFrm
       Style           =   1  'Graphical
       TabIndex        =   7
       Top             =   6480
-      Width           =   2895
+      Width           =   5295
    End
    Begin VB.ListBox List3 
       BeginProperty Font 
@@ -144,6 +144,7 @@ Begin VB.Form MainFrm
       Left            =   0
       Style           =   1  'Graphical
       TabIndex        =   2
+      ToolTipText     =   "Test DB"
       Top             =   480
       Width           =   3615
    End
@@ -164,7 +165,7 @@ Begin VB.Form MainFrm
       Style           =   1  'Graphical
       TabIndex        =   1
       Top             =   1800
-      Width           =   3615
+      Width           =   5295
    End
    Begin VB.ListBox List1 
       BeginProperty Font 
@@ -192,9 +193,9 @@ Begin VB.Form MainFrm
    Begin VB.Label Label1 
       Caption         =   "Counter"
       Height          =   255
-      Left            =   4920
+      Left            =   9120
       TabIndex        =   11
-      Top             =   1800
+      Top             =   1920
       Width           =   1095
    End
    Begin VB.Label Label8 
@@ -465,7 +466,7 @@ Me.Label1 = "Customers"
 CustLog ("Customers_Click connect to DB " & MySQLDatabaseName)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 CustLog ("Customers_Click Connection answer = " & Answer)
-
+Me.List1.Clear
 
 If Answer = True Then
     MyView = "CV_Ink_Customer"
@@ -899,8 +900,9 @@ If Answer = True Then
             Call AddPress(Printer, Printer)
             Call AddCustomer(CustCode, CustCode)
             Substrate = UpdateSubstrate(Substrate)
+            WriteDesignTraceLog ("Substrate now=" & Substrate)
             WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))  ' & "," & Printer & "," & LastChange))
-            'WriteDesignTraceLog "Calling UpdateDesign,"
+            WriteDesignTraceLog "Calling UpdateDesign,"
             Call UpdateDesign(Spec, Design, CustCode, Substrate, Printer, CSng(PrWidth), CSng(PrRepeat), CDate(LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear), LastChange24, MyComment, DesignImage, InkType)
 
         End If
@@ -1370,12 +1372,12 @@ designname = Left(designname, 50)
 designcode = Replace(designcode, "'", "`")
 designcode = Left(designcode, 18)
 
-Substrate = Replace(Substrate, "'", " ")
-If IsNull(Substrate) Then
-  Substrate = "NO SUBSTATE CODE"
-ElseIf Substrate = "" Then
-  Substrate = "NO SUBSTATE CODE"
-End If
+'Substrate = Replace(Substrate, "'", " ")
+'If IsNull(Substrate) Then
+'  Substrate = "NO SUBSTATE CODE"
+'ElseIf Substrate = "" Then
+'  Substrate = "NO SUBSTATE CODE"
+'End If
 
 WriteDesignTraceLog ("UpdateDesign: " & designcode & ", substrate=" & Substrate)
 
@@ -1463,7 +1465,7 @@ ElseIf SubstrateCode = "" Then
 End If
 Set rstSubs = db.OpenRecordset("SELECT * FROM [Substrates] WHERE [Substrate code] = '" & SubstrateCode & "'")
 If rstSubs.RecordCount <> 0 Then
-    WriteDesignTraceLog ("Substrate added: " & SubstrateCode)
+    'WriteDesignTraceLog ("Substrate exists: " & SubstrateCode)
 Else
     WriteDesignTraceLog ("Substrate added: " & SubstrateCode)
     rstSubs.AddNew
@@ -1474,6 +1476,7 @@ End If
 
 rstSubs.Close
 db.Close
+UpdateSubstrate = SubstrateCode
 End Function
 
 Function AddJob(worksorder As String, designcode As String)
