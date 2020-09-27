@@ -199,7 +199,7 @@ Begin VB.Form MainFrm
       Width           =   1095
    End
    Begin VB.Label Label8 
-      Caption         =   "Version C3/ 2020.09.21-02"
+      Caption         =   "Version C3/ 2020.09.25 -01"
       Height          =   255
       Left            =   9840
       TabIndex        =   9
@@ -261,7 +261,7 @@ End Sub
 
 
 Private Sub bbMigrateSpecs_Click()
-' migrate old job customer codes to new C3 codes
+' migrate old job customer + spec codes to new C3 codes
 Dim Query As String
 Dim db, db2 As Database
 Dim rstCust, rst2 As DAO.Recordset
@@ -486,7 +486,7 @@ If Answer = True Then
                 If Not IsNull(rst1![JobSystem_Cust_Code]) Then
                     JCustCode = rst1![JobSystem_Cust_Code]
                 Else
-                    JCustCode = "NO JobSystem_Cust_Code"
+                    JCustCode = ""
                 End If
                 If Not IsNull(rst1![Name]) Then
                     CustName = rst1![Name]
@@ -1258,27 +1258,41 @@ Function WriteExportTraceLog(TraceText As String)
 End Function
 
 Function UpdateCustomer(CustomerCode As String, CustomerName As String, JCustCode As String)
-Dim db As Database
-Dim rstCust As DAO.Recordset
+Dim db, db2 As Database
+Dim rstCust, rst2 As DAO.Recordset
 
 Set db = OpenDatabase(AccessDBPath)
+Set db2 = OpenDatabase(AccessDBPath)
 
 Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 If rstCust.RecordCount = 0 Then
-    ' Add new customer name, code
-    rstCust.AddNew
-    rstCust![Customer Code] = CustomerCode
-    rstCust![customer name] = CustomerName
-    rstCust.Update
-    CustLog ("UpdateCustomer: code " & CustomerCode & " added - " & CustomerName)
+    ' Code does not exist
+    Set rst2 = db2.OpenRecordset("SELECT [Customer Code] FROM [Customers] WHERE [Customer Code] = '" & JCustCode & "'")
+    If rst2.RecordCount = 1 Then
+        ' a) Rename a Job Cust, or
+        If DebugLevel = 1 Then
+          CustLog ("UpdateCustomer: rename Jobcust " & JCustCode & " to " & CustomerCode)
+        End If
+        rst2.Edit
+        rst2![Customer Code] = CustomerCode
+        rst2![customer name] = CustomerName
+        rst2.Update
+    Else
+        ' b) Add new customer name + code
+        CustLog ("UpdateCustomer: code " & CustomerCode & " added - " & CustomerName)
+        rstCust.AddNew
+        rstCust![Customer Code] = CustomerCode
+        rstCust![customer name] = CustomerName
+        rstCust.Update
+    End If
 Else
-    ' Update customer name, given code
+    ' Code exists: Update customer name, given code
+    If DebugLevel = 1 Then
+      CustLog ("UpdateCustomer: " & CustomerCode & ": customer name updated")
+    End If
     rstCust.Edit
     rstCust![customer name] = CustomerName
     rstCust.Update
-    If DebugLevel = 1 Then
-      CustLog ("UpdateCustomer: " & CustomerCode & " customer name updated")
-    End If
 End If
 rstCust.Close
 
@@ -1638,10 +1652,11 @@ Private Sub Timer2_Timer()
         Me.List2.Clear
         Me.List3.Clear
         
-        Call Customers_Click
+        Call bbMigrateSpecs_Click
+        'Call Customers_Click
         Call Command3_Click
         Call Command4_Click
-        Call Command5_Click
+        'Call Command5_Click
         Me.Timer1.Enabled = True
     End If
     
