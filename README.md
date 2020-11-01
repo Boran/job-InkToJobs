@@ -4,6 +4,9 @@ InkToJobs
 The program “InkToJobs” is run each day @07:00 on the Ink PC “inovexmillpc” in the mIll that exports pricing to the Jobsystem, and Imports/updates customers/jobs/specs.
 The InkToJobs is written in Visual Basic, originally by Inovex, but now maintained by Sean.
 
+The master branch interfaces with the Job System on MYSQL.
+See the mssql branch with interfaces to C3 on Microsoft SQL.
+
 Queries:
 - Three mysql views v_ink_cust, v_ink_spec, v_ink_job have been created
 - /secure/queries/serverside/report_pr runs on milldb each night and reports a list of job inks updated
@@ -66,3 +69,12 @@ Development environment
 See also the google doc https://docs.google.com/document/d/1pSPYGSR8J53h2mUsSDMyKPb0Tckvz-1NGiHxq1I31-k/edit#
 
 Sean Boran, 2012.
+
+<hr> 
+Links to BP git repos: 
+
+ * Production reports https://github.com/Boran/jobcard-prodreports
+ * Job System UI: https://github.com/Boran/jobcard-delphi
+ * Job UI report sql/layouts: https://github.com/Boran/jobcard-layouts
+ * Linux script and server-side job sql: https://github.com/Boran/bpsecure
+ * Ink System intwrface: https://github.com/Boran/job-InkToJobs
