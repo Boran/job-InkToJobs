@@ -1,6 +1,9 @@
 InkToJobs
 ---------
 
+NOTE: the latest code, for MS-SQL (C3) is in the mssql branch. 
+The code here is no loonger used.
+
 The program “InkToJobs” is run each day @07:00 on the Ink PC “inovexmillpc” in the mIll that exports pricing to the Jobsystem, and Imports/updates customers/jobs/specs.
 The InkToJobs is written in Visual Basic, originally by Inovex, but now maintained by Sean.
 
