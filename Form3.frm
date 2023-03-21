@@ -1,18 +1,46 @@
 VERSION 5.00
 Begin VB.Form MainFrm 
-   Caption         =   "Ink - Job/C3 synchronisation"
-   ClientHeight    =   8925
+   Caption         =   "Ink - C3 synchronisation"
+   ClientHeight    =   8790
    ClientLeft      =   1035
    ClientTop       =   645
-   ClientWidth     =   12570
+   ClientWidth     =   12525
    Icon            =   "Form3.frx":0000
    LinkTopic       =   "Form3"
-   ScaleHeight     =   8925
-   ScaleWidth      =   12570
+   ScaleHeight     =   8790
+   ScaleWidth      =   12525
    WindowState     =   2  'Maximized
+   Begin VB.ListBox List4 
+      BeginProperty Font 
+         Name            =   "Courier New"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   1530
+      ItemData        =   "Form3.frx":068A
+      Left            =   0
+      List            =   "Form3.frx":068C
+      TabIndex        =   15
+      Top             =   7080
+      Width           =   12375
+   End
+   Begin VB.CommandButton bbCostings 
+      BackColor       =   &H0000FF00&
+      Caption         =   "5. Export Costings"
+      Height          =   495
+      Left            =   0
+      TabIndex        =   14
+      Top             =   6600
+      Width           =   3375
+   End
    Begin VB.CommandButton bbMigrateSpecs 
-      BackColor       =   &H00FFFF80&
-      Caption         =   "Manually first: migrate custs/specs"
+      BackColor       =   &H80000004&
+      Caption         =   "Legacy: migrate custs/specs"
+      Enabled         =   0   'False
       BeginProperty Font 
          Name            =   "Courier New"
          Size            =   8.25
@@ -23,10 +51,10 @@ Begin VB.Form MainFrm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   375
-      Left            =   8280
+      Left            =   8400
       Style           =   1  'Graphical
       TabIndex        =   12
-      Top             =   6480
+      Top             =   4680
       Width           =   3975
    End
    Begin VB.Timer Timer2 
@@ -42,23 +70,23 @@ Begin VB.Form MainFrm
    End
    Begin VB.TextBox Text1 
       Height          =   285
-      Left            =   10320
+      Left            =   4560
       TabIndex        =   10
-      Top             =   1920
-      Width           =   2175
+      Top             =   960
+      Width           =   3015
    End
    Begin VB.TextBox txtmysqlconnectionstring 
       Appearance      =   0  'Flat
       BackColor       =   &H8000000B&
       BorderStyle     =   0  'None
-      Height          =   495
-      Left            =   4200
+      Height          =   375
+      Left            =   5400
       MultiLine       =   -1  'True
       TabIndex        =   8
-      Top             =   720
-      Width           =   7935
+      Top             =   480
+      Width           =   6735
    End
-   Begin VB.CommandButton Command4 
+   Begin VB.CommandButton bbJobs 
       BackColor       =   &H00FFFF80&
       Caption         =   "4. Import Jobs"
       BeginProperty Font 
@@ -74,8 +102,8 @@ Begin VB.Form MainFrm
       Left            =   0
       Style           =   1  'Graphical
       TabIndex        =   7
-      Top             =   6480
-      Width           =   5295
+      Top             =   4680
+      Width           =   3375
    End
    Begin VB.ListBox List3 
       BeginProperty Font 
@@ -87,10 +115,10 @@ Begin VB.Form MainFrm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   1740
+      Height          =   1320
       Left            =   0
       TabIndex        =   6
-      Top             =   6960
+      Top             =   5040
       Width           =   12495
    End
    Begin VB.ListBox List2 
@@ -103,10 +131,10 @@ Begin VB.Form MainFrm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   2160
+      Height          =   900
       Left            =   0
       TabIndex        =   5
-      Top             =   4080
+      Top             =   3480
       Width           =   12495
    End
    Begin VB.CommandButton Command3 
@@ -125,7 +153,7 @@ Begin VB.Form MainFrm
       Left            =   0
       Style           =   1  'Graphical
       TabIndex        =   4
-      Top             =   3600
+      Top             =   3120
       Width           =   5295
    End
    Begin VB.CommandButton Command1 
@@ -146,7 +174,7 @@ Begin VB.Form MainFrm
       TabIndex        =   2
       ToolTipText     =   "Test DB"
       Top             =   480
-      Width           =   3615
+      Width           =   3255
    End
    Begin VB.CommandButton Customers 
       BackColor       =   &H00FFFF80&
@@ -164,8 +192,8 @@ Begin VB.Form MainFrm
       Left            =   0
       Style           =   1  'Graphical
       TabIndex        =   1
-      Top             =   1800
-      Width           =   5295
+      Top             =   1320
+      Width           =   3255
    End
    Begin VB.ListBox List1 
       BeginProperty Font 
@@ -177,29 +205,30 @@ Begin VB.Form MainFrm
          Italic          =   0   'False
          Strikethrough   =   0   'False
       EndProperty
-      Height          =   1110
+      Height          =   1320
       Left            =   0
       TabIndex        =   0
-      Top             =   2280
+      Top             =   1680
       Width           =   12495
    End
-   Begin VB.Label TextSql 
+   Begin VB.Label LabelActivity 
+      Caption         =   "Activity:"
       Height          =   255
-      Left            =   4200
+      Left            =   2280
       TabIndex        =   13
-      Top             =   1320
-      Width           =   7095
+      Top             =   960
+      Width           =   975
    End
    Begin VB.Label Label1 
       Caption         =   "Counter"
       Height          =   255
-      Left            =   9120
+      Left            =   3360
       TabIndex        =   11
-      Top             =   1920
+      Top             =   960
       Width           =   1095
    End
-   Begin VB.Label Label8 
-      Caption         =   "Version C3/ 2020.09.25 -01"
+   Begin VB.Label Version 
+      Caption         =   "Version C3/ 2023.03.19"
       Height          =   255
       Left            =   9840
       TabIndex        =   9
@@ -218,10 +247,10 @@ Begin VB.Form MainFrm
          Strikethrough   =   0   'False
       EndProperty
       Height          =   255
-      Left            =   4200
+      Left            =   3360
       TabIndex        =   3
       Top             =   480
-      Width           =   2895
+      Width           =   1935
    End
 End
 Attribute VB_Name = "MainFrm"
@@ -230,7 +259,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Dim StrSource As String
+Dim StrSource, sql1 As String
 Dim AccessConn As New ADODB.Connection
 Dim rst1 As New ADODB.Recordset
 Dim rst2 As New ADODB.Recordset
@@ -258,6 +287,162 @@ Public Sub TerminateConnection()
     Set g_MySQLConn = Nothing
     Set g_MySQLError = Nothing
 End Sub
+
+
+
+Private Sub bbCostings_Click()
+
+Dim Counter, i, recordsAffected As Long
+Dim db As Database
+Dim src, rst As DAO.Recordset
+Dim dst As DAO.Recordset
+Dim fieldNames() As String
+Dim Flds As ADODB.Fields
+Dim Field  As ADODB.Field
+Dim startDate As String
+Dim qdfChange As QueryDef
+
+' Turn on error handling
+On Error GoTo FormLoadError
+  
+Me.Label1 = "Costings"
+Me.Text1 = AccessDBPath
+Me.List4.Clear
+Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
+If Answer = False Then
+  ' error?
+  Return
+End If
+
+' irst delete entries in the C3, that we will replace
+startDate = Format(DateAdd("d", -DaysToLook, Now), "yyyy/mm/dd")
+sql1 = "DELETE from BT_Ink_Costing where [Date Opened] > '" & startDate & "'"
+CustLog (sql1)
+g_MySQLConn.Execute sql1, recordsAffected
+Me.List4.AddItem "First delete entries in the C3 later than " & startDate & ", count=" & recordsAffected
+'dst.Close
+'Exit Sub
+
+Set db = OpenDatabase(AccessDBPath)
+sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Opened] Between Date()-" & DaysToLook & " And Date() ORDER BY [Costing Reports Details].[Date Opened] ASC"
+'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Closed] Between Date()-" & DaysToLook & " And Date() ORDER BY [Costing Reports Details].[Date Closed] ASC"
+'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Opened] > '2023-03-15' ORDER BY [Costing Reports Details].[Date Opened] ASC"
+CustLog (">> " & sql1)
+Set src = db.OpenRecordset(sql1)
+
+Counter = 0
+If src.RecordCount <> 0 Then
+  Me.List4.AddItem ">> [Costing Report Details]: " & src.RecordCount & ", columns=" & src.Fields.Count
+  CustLog (">> C3 sync [Costing Report Details] found: " & src.RecordCount)
+  
+  Do Until src.EOF
+    Counter = Counter + 1
+    Me.Text1 = Counter
+  
+    ' Build an INSERT string like:
+    'str = "INSERT INTO `BT_Ink_Costing` (`date opened`,`month opened`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`,`ink cost`,`total cost`,`estimated sqm`,`sqm`,`whites cost`,`colours cost`,`lacquer cost`,`Actual Cost per 1000sqm ex uplift`,`Date Closed`)" & _
+    ' " VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "','" & InkCost & "','" & TotalCost & "','" & EstimatedSQM & "','" & SQM & "','" & WhitesCost & "','" & ColoursCost & "','" & LacquerCost & "','" & ACper1000 & "','" & MyNewDateClosed & "' )"
+
+    'Prepare query: field names
+    ReDim fieldNames(src.Fields.Count - 1)
+    sql1 = " INSERT INTO BT_Ink_Costing ("
+    For i = 0 To src.Fields.Count - 1
+        fieldNames(i) = LCase(CStr(src.Fields(i).Name))
+        'Me.List4.AddItem "Field:" & fieldNames(i)
+        sql1 = sql1 & "[" & fieldNames(i) & "]"
+        If i <> src.Fields.Count - 1 Then
+          ' except last, add trailing comma
+          sql1 = sql1 & ","
+        End If
+    Next i
+    sql1 = sql1 & ") VALUES ("
+    'Me.List4.AddItem sql1
+    
+    'Prepare query: field values
+    For i = 0 To src.Fields.Count - 1
+        'Me.List4.AddItem i & ":" & fieldNames(i) & "=<" & src.Fields(fieldNames(i)) & ">"
+        If IsNull(src.Fields(fieldNames(i))) Then
+          sql1 = sql1 & "''"
+          'Me.List4.AddItem "null: " & fieldNames(i)
+        ElseIf src.Fields(fieldNames(i)) = "" Then
+          sql1 = sql1 & "''"
+          'Me.List4.AddItem "empty str: " & fieldNames(i)
+        ElseIf IsEmpty(src.Fields(fieldNames(i))) Then
+          sql1 = sql1 & "0"
+          'Me.List4.AddItem "empty: " & fieldNames(i)
+        'ElseIf IsNumeric(src.Fields(fieldNames(i))) Then
+          'sql1 = sql1 & "0"
+          'Me.List4.AddItem "IsNumeric: " & fieldNames(i)
+        ElseIf fieldNames(i) = "date opened" Or fieldNames(i) = "date closed" Then
+          'Me.List4.AddItem "Format=" & src.Fields(fieldNames(i)) & "--" & Format(src.Fields(fieldNames(i)), "yyyy/mm/dd")
+          sql1 = sql1 & "'" & Format(src.Fields(fieldNames(i)), "yyyy/mm/dd") & "'"
+        Else
+          'sql1 = sql1 & "'" & src.Fields(fieldNames(i)) & "'"
+          ' Qoutes cause havoc, replace with dot
+          sql1 = sql1 & "'" & Replace(src.Fields(fieldNames(i)), "'", ".") & "'"
+          'Me.List4.AddItem src.Fields(fieldNames(i))
+        End If
+        If i <> src.Fields.Count - 1 Then
+          ' except last, add trailing comma
+          'Me.List4.AddItem " comma "
+          sql1 = sql1 & ","
+        End If
+    Next i
+    sql1 = sql1 & ")"
+
+    ' execute query on MS_SQL: insert data
+    If DebugLevel > 1 Then
+      CustLog ("Costings C3 add:" & sql1)
+    End If
+    rst1.Open sql1, g_MySQLConn, adOpenDynamic, adLockOptimistic
+    
+    src.MoveNext
+  Loop
+  Me.Text1 = Counter & ", done."
+  CustLog (" ")
+End If
+
+
+Me.List4.AddItem ">> Validation: Most recent 10 costings now in C3:"
+rst1.Open "SELECT top (10 ) * from BT_Ink_Costing order by [date opened] desc", g_MySQLConn, adOpenDynamic, adLockOptimistic
+Do Until rst1.EOF
+  If Not IsNull(rst1![design name]) Then
+    Me.List4.AddItem rst1![date opened] & " " & rst1![design name]
+  End If
+  rst1.MoveNext
+Loop
+rst1.Close
+    
+Call TerminateConnection
+src.Close
+db.Close
+Exit Sub
+
+' Error handler
+FormLoadError:
+ Dim strErr As String
+ Select Case Err
+ Case adErrObjectOpen
+ strErr = "Error #" & Err.Number & ": " & Err.Description & vbCrLf
+ strErr = strErr & "Error reported by: " & Err.Source & vbCrLf
+ strErr = strErr & "Help File: " & Err.HelpFile & vbCrLf
+ strErr = strErr & "Topic ID: " & Err.HelpContext
+ MsgBox strErr
+ Debug.Print strErr
+ Err.Clear
+ Resume Next
+ ' If some other error occurs that
+ ' has nothing to do with ADO, show
+ ' the number and description and exit.
+ Case Else
+ strErr = "Error #" & Err.Number & ": " & Err.Description & vbCrLf
+ MsgBox strErr
+ Debug.Print strErr
+ Unload Me
+ End Select
+End Sub
+' EndErrorHandlingVB01
+
 
 
 Private Sub bbMigrateSpecs_Click()
@@ -389,8 +574,8 @@ If Answer = True Then
         
 
         Me.List3.AddItem "-- 5. Update [Design Details].."
-        WriteDesignTraceLog ("-- 5. Update [Design Details]..")
-        Set rstCust = db.OpenRecordset("SELECT * FROM [Design Details] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+        WriteDesignTraceLog ("-- 5. Update [Design Details] " & rst1![OldJobSpec])
+        Set rstCust = db.OpenRecordset("SELECT * FROM [Design Details] WHERE [Design Code] = '" & Replace(rst1![OldJobSpec], "'", "") & "'")
         Do Until rstCust.EOF
             ' Update code
             If Not IsNull(rstCust![Design Code]) Then
@@ -408,7 +593,8 @@ If Answer = True Then
             
         Me.List3.AddItem "-- 6. Update [Works Orders].."
         WriteDesignTraceLog ("-- 6. Update [Works Orders]..")
-        Set rstCust = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+        'Set rstCust = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Design Code] = '" & rst1![OldJobSpec] & "'")
+        Set rstCust = db.OpenRecordset("SELECT * FROM [Works Orders] WHERE [Design Code] = '" & Replace(rst1![OldJobSpec], "'", "") & "'")
         Do Until rstCust.EOF
             ' Update spec code
             If Not IsNull(rstCust![Design Code]) Then
@@ -445,7 +631,7 @@ Answer2 = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQ
 If Answer2 = True Then
   'MsgBox "Connected to DB Server = "
 Else
-  MsgBox "Could not connect to the DB server "
+  MsgBox "Could not connect to " & MySQLDatabaseName & "  on DB server " & MySQLHost
 End If
 
 End Sub
@@ -463,7 +649,8 @@ Dim HeaderStr As String
 Dim Counter As Integer
 
 Me.Label1 = "Customers"
-CustLog ("Customers_Click connect to DB " & MySQLDatabaseName)
+CustLog (" ")
+CustLog (">> Customers_Click connect to DB " & MySQLDatabaseName)
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 CustLog ("Customers_Click Connection answer = " & Answer)
 Me.List1.Clear
@@ -501,6 +688,7 @@ If Answer = True Then
                 
                 CustLog ("Customers_Click: " & CustCode & "," & JCustCode & "," & CustName & "," & CustAddress)
                 Me.Text1 = Counter & " " & CustName
+                ' Actually make the change
                 Call UpdateCustomer(CustCode, CustName, JCustCode)
         End If
 
@@ -508,9 +696,11 @@ If Answer = True Then
         Me.List1.AddItem ValueStr
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
     
     rst1.Close
     Call TerminateConnection
+    CustLog (" ")
 End If
 
 
@@ -567,6 +757,7 @@ If Answer = True Then
         Call AddPress(Printer, Printer)
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
     Call TerminateConnection
     'WriteDesignTraceLog (CStr(Spec & "," & CustCode & "," & Design & "," & Substrate & "," & PrRepeat & "," & PrWidth & "," & InkType & "," & Printer & "," & LastChangeOriginal & "," & LastChangeday & "/" & LastChangemonth & "/" & LastChangeyear & "," & LastChangeTime & "," & LastChange24))
 End If
@@ -637,6 +828,7 @@ If Answer = True Then
         
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
     Call TerminateConnection
 End If
 
@@ -697,6 +889,7 @@ If Answer = True Then
         
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
 
     Call TerminateConnection
 End If
@@ -756,6 +949,7 @@ If Answer = True Then
         
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
      
     Call TerminateConnection
 End If
@@ -913,6 +1107,7 @@ If Answer = True Then
         Me.List2.AddItem ValueStr
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
 
     rst1.Close
     WriteDesignTraceLog ("------ AddDesigns: done ")
@@ -922,7 +1117,7 @@ End If
 End Sub
 
 
-Private Sub Command4_Click()
+Private Sub bbJobs_Click()
 ' import jobs
 Dim MyView As String
 Dim job As String
@@ -935,7 +1130,7 @@ Dim HeaderStr As String
 Dim Counter As Integer
 
 
-WriteJobsTraceLog ("------ Command4_Click connect DB")
+WriteJobsTraceLog ("------ bbJobs_Click connect DB")
 Answer = EstablishMySQLConnection(MySQLUserName, MySQLPassword, MySQLHost, MySQLDatabaseName, MySQLPort, MySQLDriver)
 WriteJobsTraceLog ("Connection = " & Answer)
 
@@ -977,10 +1172,11 @@ If Answer = True Then
         Call AddJob(job, Spec)
         rst1.MoveNext
     Loop
+    Me.Text1 = Counter & ", done."
 
     rst1.Close
 End If
-WriteJobsTraceLog ("------ Command4_Click done")
+WriteJobsTraceLog ("------ bbJobs_Click done")
 Call TerminateConnection
 
 
@@ -994,13 +1190,11 @@ Me.WindowState = 1
 
 'MsgBox "LoadSetups"
 Call LoadSetups
-
 'Exit Sub
 
 Call UpdateSubstrate("NO SUBSTRATE")
 Call AddCustomer("NO CUSTOMER CODE", "NO CUSTOMER CODE")
 'Timer2Counter = 10
-
 
 'Me.txtDatabaseName.Text = "boranpla"
 'Me.txtDriver.Text = "MySQL ODBC 5.1 Driver"
@@ -1220,14 +1414,10 @@ If Answer = True Then
 End If
 
 If NoRecord = False Then
-
     WriteExportTraceLog ("Setting INSERT statement for worksorder = " & worksorder)
     
     StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`,`ink cost`,`total cost`,`estimated sqm`,`sqm`,`whites cost`,`colours cost`,`lacquer cost`,`Actual Cost per 1000sqm ex uplift`,`Date Closed`)" & _
     " VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "','" & InkCost & "','" & TotalCost & "','" & EstimatedSQM & "','" & SQM & "','" & WhitesCost & "','" & ColoursCost & "','" & LacquerCost & "','" & ACper1000 & "','" & MyNewDateClosed & "' )"
-    'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "' ,'" & designname & "', '" & inkweight & "', '" & MyNewDate & "', '" & Customer & "', '" & WhiteWeight & "', '" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "','" & totaltargetcost & "','" & TargetCost1000 & "')"
-    'StrSQL = "INSERT INTO `ink_costing reports details` (`works order number`,`design code`,`design name`,`ink weight`,`date opened`,`customer`,`whites weight`,`colours weight`,`lacquer weight`,`other weight`,`returns returned`,`returns returned cost`,`returns issued`,`returns issued to job cost`,`totaltargetcost`,`targetcostper1000sqm`) VALUES ( '" & worksorder & "' , '" & designcode & "','" & designname & "', '" & inkweight & "', '" & MyNewDate & "','" & Customer & "','" & WhiteWeight & "','" & ColoursWeight & "','" & LacquerWeight & "','" & OtherWeight & "','" & ReturnsReturned & "','" & ReturnsReturnedCost & "','" & ReturnsIssued & "','" & ReturnsIssuedToJobCost & "')"
-    
     
     WriteExportTraceLog ("InsertData INTO `ink_costing reports details`")
     rst1.Open StrSQL, g_MySQLConn, adOpenDynamic, adLockOptimistic
@@ -1266,29 +1456,30 @@ Set db2 = OpenDatabase(AccessDBPath)
 
 Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = '" & CustomerCode & "'")
 If rstCust.RecordCount = 0 Then
-    ' Code does not exist
+    CustLog ("UpdateCustomer: db1: " & CustomerCode & " does not exist")
     Set rst2 = db2.OpenRecordset("SELECT [Customer Code] FROM [Customers] WHERE [Customer Code] = '" & JCustCode & "'")
     If rst2.RecordCount = 1 Then
         ' a) Rename a Job Cust, or
         If DebugLevel = 1 Then
-          CustLog ("UpdateCustomer: rename Jobcust " & JCustCode & " to " & CustomerCode)
+          CustLog ("UpdateCustomer: rename " & JCustCode & "=" & CustomerCode & ", name was XX " & " now=" & CustomerName)
+          CustLog (rst2![customer name].Value)
         End If
         rst2.Edit
-        rst2![Customer Code] = CustomerCode
+        rst2![customer Code] = CustomerCode
         rst2![customer name] = CustomerName
         rst2.Update
     Else
         ' b) Add new customer name + code
-        CustLog ("UpdateCustomer: code " & CustomerCode & " added - " & CustomerName)
+        CustLog ("UpdateCustomer: add new code " & CustomerCode & " name=" & CustomerName)
         rstCust.AddNew
-        rstCust![Customer Code] = CustomerCode
+        rstCust![customer Code] = CustomerCode
         rstCust![customer name] = CustomerName
         rstCust.Update
     End If
 Else
     ' Code exists: Update customer name, given code
     If DebugLevel = 1 Then
-      CustLog ("UpdateCustomer: " & CustomerCode & ": customer name updated")
+      CustLog ("UpdateCustomer name with code=" & CustomerCode & ", name updated:" & CustomerName)
     End If
     rstCust.Edit
     rstCust![customer name] = CustomerName
@@ -1325,7 +1516,7 @@ Set rstCust = db.OpenRecordset("SELECT * FROM Customers WHERE [Customer code] = 
 
 If rstCust.RecordCount = 0 Then
     rstCust.AddNew
-    rstCust![Customer Code] = CustomerCode
+    rstCust![customer Code] = CustomerCode
     rstCust![customer name] = CustomerName
     rstCust.Update
 End If
@@ -1633,6 +1824,10 @@ Private Sub Form_Terminate()
   'MsgBox "Job/Ink systems sync completed."
 End Sub
 
+Private Sub Label8_Click()
+
+End Sub
+
 Private Sub Timer1_Timer()
     ' THIS TIMER IS USED TO CLOSE THE PROGRAM AFTER IMPORT HAS FINISHED.
     
@@ -1652,10 +1847,12 @@ Private Sub Timer2_Timer()
         Me.List2.Clear
         Me.List3.Clear
         
+        Call bbCostings_Click
+         
         Call bbMigrateSpecs_Click
         'Call Customers_Click
         Call Command3_Click
-        Call Command4_Click
+        Call bbJobs_Click
         'Call Command5_Click
         Me.Timer1.Enabled = True
     End If

@@ -1,0 +1,11 @@
+Database Name : C3_Boran
+Driver : sqloledb
+Host: bpc3.boran.ie
+Password : ink.it
+UserName : inkcost
+Port : 1433
+DispenserDatabasePath : C:\f\InkToJobs-5378\5378\5378_2007BE.mdb
+Default Print Process : Flexo
+Timer Count Value In Seconds : 1800
+Days To Look Back : 30
+DebugLevel : 1

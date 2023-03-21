@@ -1,14 +1,22 @@
-Database Name : boranpla
-Driver : MySQL ODBC 5.1 Driver
-Host : 127.0.0.1
-Password : 
-UserName : root
-Port : 3306
-DispenserDatabasePath : C:\f\InkToJobs-5378\5378\5378_2007BE.mdb
+Database Name : C3_Boran
+Driver : sqloledb
+Host: bpc3
+Password : ink.it
+UserName : inkcost
+Port : 1433
+DispenserDatabasePath : C:\f\1029921B\1029921B_BE.mdb
 Default Print Process : Flexo
-Timer Counter Value : 3600
-Days To Look Back : 30
+Timer Count Value In Seconds : 1800
+Days To Look Back : 7
 DebugLevel : 1
+
+
 note
 note : Horrible: settings must be in the exact order above
 note : DebugLevel : 0=normal timed run 1=debug >1=normal no timer
+DispenserDatabasePath : C:\f\InkToJobs-5378\5378\5378_2007BE.mdb
+DispenserDatabasePath : C:\1029921B\1029921B_BE.mdb
+Driver : SQLNCLI11
+Host: bpc3.boran.ie
+Days To Look Back : 23
+Days To Look Back : 30
