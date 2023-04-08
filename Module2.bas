@@ -53,28 +53,33 @@ Set g_MySQLConn = New ADODB.Connection
 'mysql:
 'strConnectString = "Provider=MSDASQL;" & _
 '   strConnectString = "Provider=MSDASQL;" & _
-'ms-sql as follows, no provider
-'strConnectString = "Provider=SQLNCLI11;" & _
 
-strConnectString = "Provider=SQLNCLI11;" & _
+If MYODBCVERSION = "SQLNCLI11" Then
+ ' ms-sql as follows, no provider
+ strConnectString = "Provider=SQLNCLI11;" & _
                     "Server=" & MYSQL_HOST & ";" & _
                     "Database=" & MYSQL_DATABASE & ";" & _
                     "UID=" & MYSQL_USER_NAME & ";" & _
                     "PWD=" & MYSQL_PASSWORD & ";" & _
                     "Port=" & MYSQL_PORT
-
-strConnectStringDisplay = "Provider=SQLNCLI11;" & _
+  strConnectStringDisplay = "Provider=SQLNCLI11;" & _
                     "Driver=" & MYODBCVERSION & ";" & _
                     "Server=" & MYSQL_HOST & ";" & _
                     "Database=" & MYSQL_DATABASE & ";" & _
                     "UID=" & MYSQL_USER_NAME & ";" & _
                     "Port=" & MYSQL_PORT
+ElseIf MYODBCVERSION = "sqloledb" Then
+  strConnectString = "Provider=SQLOLEDB;Data Source=" & MYSQL_HOST & ";"
+  strConnectStringDisplay = strConnectString
+' ELSE?
+End If
+
 
 MainFrm![txtmysqlconnectionstring].Text = strConnectStringDisplay
 
-
+' Actually open the DB
 g_MySQLConn.Open strConnectString, MYSQL_USER_NAME, MYSQL_PASSWORD
-'Check Conncetion State
+'Check Connection State
 If g_MySQLConn.State <> adStateOpen Then
     EstablishMySQLConnection = False
 Else
@@ -93,7 +98,7 @@ For Each g_MySQLError In g_MySQLConn.Errors
     strError = strError & g_MySQLError.Number & "  :  " & _
         g_MySQLError.Description & vbCrLf & vbCrLf
 Next
-MsgBox strError, vbCritical + vbOKOnly, "Login Error"
+MsgBox strError, vbCritical + vbOKOnly, " Login Error "
 
 End Function
 

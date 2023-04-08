@@ -228,7 +228,7 @@ Begin VB.Form MainFrm
       Width           =   1095
    End
    Begin VB.Label Version 
-      Caption         =   "Version C3/ 2023.03.19"
+      Caption         =   "Version C3/ 2023.04.08"
       Height          =   255
       Left            =   9840
       TabIndex        =   9
@@ -326,7 +326,8 @@ Me.List4.AddItem "First delete entries in the C3 later than " & startDate & ", c
 Set db = OpenDatabase(AccessDBPath)
 sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Opened] Between Date()-" & DaysToLook & " And Date() ORDER BY [Costing Reports Details].[Date Opened] ASC"
 'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Closed] Between Date()-" & DaysToLook & " And Date() ORDER BY [Costing Reports Details].[Date Closed] ASC"
-'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Opened] > '2023-03-15' ORDER BY [Costing Reports Details].[Date Opened] ASC"
+'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] WHERE [Costing Reports Details].[Date Opened] > '2023-03-27' ORDER BY [Costing Reports Details].[Date Opened] ASC"
+'sql1 = "SELECT [Costing Reports Details].* From [Costing Reports Details] where [works order number]='517072'"
 CustLog (">> " & sql1)
 Set src = db.OpenRecordset(sql1)
 
@@ -370,18 +371,25 @@ If src.RecordCount <> 0 Then
         ElseIf IsEmpty(src.Fields(fieldNames(i))) Then
           sql1 = sql1 & "0"
           'Me.List4.AddItem "empty: " & fieldNames(i)
-        'ElseIf IsNumeric(src.Fields(fieldNames(i))) Then
+        ElseIf IsNumeric(src.Fields(fieldNames(i))) Then
           'sql1 = sql1 & "0"
-          'Me.List4.AddItem "IsNumeric: " & fieldNames(i)
+
+          sql1 = sql1 & Str(src.Fields(fieldNames(i)))
+          If fieldNames(i) = "total cost" And DebugLevel > 1 Then
+            Me.List4.AddItem "IsNumeric: " & fieldNames(i) & "=" & src.Fields(fieldNames(i))
+          End If
+          
         ElseIf fieldNames(i) = "date opened" Or fieldNames(i) = "date closed" Then
           'Me.List4.AddItem "Format=" & src.Fields(fieldNames(i)) & "--" & Format(src.Fields(fieldNames(i)), "yyyy/mm/dd")
           sql1 = sql1 & "'" & Format(src.Fields(fieldNames(i)), "yyyy/mm/dd") & "'"
+          
         Else
           'sql1 = sql1 & "'" & src.Fields(fieldNames(i)) & "'"
-          ' Qoutes cause havoc, replace with dot
+          ' Quotes cause havoc, replace with dot
           sql1 = sql1 & "'" & Replace(src.Fields(fieldNames(i)), "'", ".") & "'"
           'Me.List4.AddItem src.Fields(fieldNames(i))
         End If
+        
         If i <> src.Fields.Count - 1 Then
           ' except last, add trailing comma
           'Me.List4.AddItem " comma "
@@ -402,12 +410,19 @@ If src.RecordCount <> 0 Then
   CustLog (" ")
 End If
 
+' ---- VALIDATE in target ---
+'Me.List4.AddItem ">> Validation: Most recent 40 costings now in C3: Date, job, cost, design"
+'rst1.Open "SELECT top (40 ) * from BT_Ink_Costing order by [date opened] desc", g_MySQLConn, adOpenDynamic, adLockOptimistic
+Me.List4.AddItem ">> Validation: Costings now in C3: Date, job, total cost, design "
+CustLog (">> Validation: Costings now in C3: Date, job, total cost, design ")
+sql1 = "SELECT * From BT_Ink_Costing WHERE [Date Opened]>=DATEADD(DAY,-" & DaysToLook & ",GETDATE()) ORDER BY [Date Opened] ASC"
+'Me.List4.AddItem sql1
+rst1.Open sql1, g_MySQLConn, adOpenDynamic, adLockOptimistic
 
-Me.List4.AddItem ">> Validation: Most recent 10 costings now in C3:"
-rst1.Open "SELECT top (10 ) * from BT_Ink_Costing order by [date opened] desc", g_MySQLConn, adOpenDynamic, adLockOptimistic
 Do Until rst1.EOF
   If Not IsNull(rst1![design name]) Then
-    Me.List4.AddItem rst1![date opened] & " " & rst1![design name]
+    Me.List4.AddItem rst1![date opened] & " " & rst1![works order number] & " cost=" & rst1![Total Cost] & " " & rst1![design name]
+    CustLog (rst1![date opened] & " " & rst1![works order number] & " cost=" & rst1![Total Cost] & " " & rst1![design name])
   End If
   rst1.MoveNext
 Loop

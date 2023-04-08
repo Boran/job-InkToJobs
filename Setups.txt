@@ -1,13 +1,13 @@
 Database Name : C3_Boran
 Driver : sqloledb
 Host: bpc3
-Password : MYPW
+Password : ink.it
 UserName : inkcost
 Port : 1433
 DispenserDatabasePath : C:\f\1029921B\1029921B_BE.mdb
 Default Print Process : Flexo
 Timer Count Value In Seconds : 1800
-Days To Look Back : 7
+Days To Look Back : 50
 DebugLevel : 1
 
 
@@ -20,3 +20,5 @@ Driver : SQLNCLI11
 Host: bpc3.boran.ie
 Days To Look Back : 23
 Days To Look Back : 30
+
+[Date Opened]>=DATEADD(DAY,-" & DaysToLook & ",GETDATE())
