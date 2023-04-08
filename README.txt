@@ -1,8 +1,8 @@
-This tool replaces InkToJobs for C3: Imports/updates customers/jobs/specs, see next section. 
+====> ms-sql branch, for C3 <=======
 
-Aim: syncing of job/spec and costing between the Ink System and C3/Job System. 
+Imports/updates customers/jobs/specs and syncing costings between the Ink System and C3. 
 
-The InkToC3 is written in Visual Basic, originally by Inovex, but now maintained by Sean. 
+The InkToC3 (replaces InkToJobs) is written in Visual Basic, originally by Inovex, but now maintained by Sean. 
 The source code is on github, mssql brwanch, see https://github.com/Boran/job-InkToJobs/tree/mssql
 
 See also https://boranp.sharepoint.com/:w:/r/sites/allit/_layouts/15/Doc.aspx?sourcedoc=%7BC126E558-F654-40B2-B892-F25AAD48B8DC%7D&file=Ink_inovex%20Notes.docx&action=default&mobileredirect=true
